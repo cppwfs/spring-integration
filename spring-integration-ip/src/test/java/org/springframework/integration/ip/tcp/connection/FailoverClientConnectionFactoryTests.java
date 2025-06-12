@@ -700,7 +700,6 @@ public class FailoverClientConnectionFactoryTests {
 		return factory;
 	}
 
-
 	private TcpNetServerConnectionFactory getTcpNetServerConnectionFactory(int port) {
 		TcpNetServerConnectionFactory result = new TcpNetServerConnectionFactory(port);
 		result.setBeanFactory(getBeanFactory());

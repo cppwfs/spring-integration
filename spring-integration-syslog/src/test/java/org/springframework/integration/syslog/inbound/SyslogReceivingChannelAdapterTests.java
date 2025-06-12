@@ -140,6 +140,7 @@ public class SyslogReceivingChannelAdapterTests {
 		adapter.stop();
 		assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 	}
+
 	private BeanFactory getBeanFactory() {
 		BeanFactory beanFactory = mock(BeanFactory.class);
 		TaskScheduler taskScheduler = mock(TaskScheduler.class);
@@ -148,6 +149,7 @@ public class SyslogReceivingChannelAdapterTests {
 		when(beanFactory.containsBean("taskScheduler")).thenReturn(true);
 		return beanFactory;
 	}
+
 	@Test
 	public void testAsMapFalse() throws Exception {
 		SyslogReceivingChannelAdapterFactoryBean factory = new SyslogReceivingChannelAdapterFactoryBean(
