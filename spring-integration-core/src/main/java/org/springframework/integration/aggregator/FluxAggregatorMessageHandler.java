@@ -17,7 +17,6 @@
 package org.springframework.integration.aggregator;
 
 import java.time.Duration;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -289,9 +288,9 @@ public class FluxAggregatorMessageHandler extends AbstractMessageProducingHandle
 								.build());
 	}
 
-
+	@Nullable
 	private static Integer sequenceSizeHeader(Message<?> message) {
-		return Objects.requireNonNull(message.getHeaders().get(IntegrationMessageHeaderAccessor.SEQUENCE_SIZE, Integer.class));
+		return message.getHeaders().get(IntegrationMessageHeaderAccessor.SEQUENCE_SIZE, Integer.class);
 	}
 
 }
