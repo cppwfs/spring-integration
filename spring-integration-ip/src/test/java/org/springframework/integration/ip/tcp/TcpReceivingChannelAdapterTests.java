@@ -654,6 +654,12 @@ public class TcpReceivingChannelAdapterTests extends AbstractTcpChannelAdapterTe
 		scf.stop();
 	}
 
+	private static AbstractServerConnectionFactory getDefaultServerConnectionFactory() {
+		AbstractServerConnectionFactory scf = new TcpNioServerConnectionFactory(0);
+		scf.setTaskScheduler(new SimpleAsyncTaskScheduler());
+		return scf;
+	}
+
 	private class FailingService {
 
 		@SuppressWarnings("unused")
@@ -661,12 +667,6 @@ public class TcpReceivingChannelAdapterTests extends AbstractTcpChannelAdapterTe
 			throw new RuntimeException("Failed");
 		}
 
-	}
-
-	private static AbstractServerConnectionFactory getDefaultServerConnectionFactory() {
-		AbstractServerConnectionFactory scf = new TcpNioServerConnectionFactory(0);
-		scf.setTaskScheduler(new SimpleAsyncTaskScheduler());
-		return scf;
 	}
 
 }

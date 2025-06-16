@@ -90,7 +90,7 @@ public class MethodInvokingMessageListProcessor<T> extends AbstractExpressionEva
 	}
 
 	@SuppressWarnings("unchecked")
-	public @Nullable T process(Collection<Message<?>> messages, Map<String, Object> aggregateHeaders) {
+	public @Nullable T process(Collection<Message<?>> messages, @Nullable Map<String, Object> aggregateHeaders) {
 		return (T) this.delegate.process(messages, aggregateHeaders);
 	}
 
