@@ -822,4 +822,5 @@ public class CachingClientConnectionFactoryTests {
 		when(factory.isActive()).thenReturn(true);
 		return factory;
 	}
+
 }

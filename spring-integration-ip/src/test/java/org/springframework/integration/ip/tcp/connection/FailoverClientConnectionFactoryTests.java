@@ -699,7 +699,7 @@ public class FailoverClientConnectionFactoryTests {
 		return factory;
 	}
 
-	private TcpNetServerConnectionFactory getTcpNetServerConnectionFactory(int port) {
+	private static TcpNetServerConnectionFactory getTcpNetServerConnectionFactory(int port) {
 		TcpNetServerConnectionFactory result = new TcpNetServerConnectionFactory(port);
 		result.setTaskScheduler(new SimpleAsyncTaskScheduler());
 
