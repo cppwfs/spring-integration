@@ -30,6 +30,7 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
+import org.springframework.integration.context.IntegrationContextUtils;
 import org.springframework.integration.metadata.PropertiesPersistingMetadataStore;
 import org.springframework.messaging.Message;
 
@@ -39,7 +40,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.springframework.integration.context.IntegrationContextUtils.INTEGRATION_EVALUATION_CONTEXT_BEAN_NAME;
 
 /**
  * @author Oleg Zhurakousky
@@ -238,10 +238,10 @@ public class FeedEntryMessageSourceTests {
 
 	private static BeanFactory getBeanFactory() {
 		BeanFactory beanFactory = mock(BeanFactory.class);
-		when(beanFactory.containsBean(eq(INTEGRATION_EVALUATION_CONTEXT_BEAN_NAME)))
+		when(beanFactory.containsBean(eq(IntegrationContextUtils.INTEGRATION_EVALUATION_CONTEXT_BEAN_NAME)))
 				.thenReturn(true);
 		StandardEvaluationContext evaluationContext = new StandardEvaluationContext();
-		when(beanFactory.getBean(eq(INTEGRATION_EVALUATION_CONTEXT_BEAN_NAME), any(Class.class)))
+		when(beanFactory.getBean(eq(IntegrationContextUtils.INTEGRATION_EVALUATION_CONTEXT_BEAN_NAME), any(Class.class)))
 				.thenReturn(evaluationContext);
 		return beanFactory;
 	}

@@ -24,28 +24,27 @@ import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.mock.MockEndpoint;
 import org.apache.camel.test.junit5.CamelTestSupport;
 import org.assertj.core.api.InstanceOfAssertFactories;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.context.expression.MapAccessor;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.integration.camel.support.CamelHeaderMapper;
 import org.springframework.integration.channel.QueueChannel;
+import org.springframework.integration.context.IntegrationContextUtils;
 import org.springframework.integration.expression.FunctionExpression;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHandlingException;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.GenericMessage;
-import org.springframework.scheduling.TaskScheduler;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.springframework.integration.context.IntegrationContextUtils.INTEGRATION_EVALUATION_CONTEXT_BEAN_NAME;
 
 /**
  * @author Artem Bilan
@@ -76,7 +75,6 @@ public class CamelMessageHandlerTests extends CamelTestSupport {
 		mockEndpoint.assertIsSatisfied();
 	}
 
-	@Disabled("Failing because a required field 'exchangePattern' is missing. ")
 	@Test
 	void inOutPatternSyncMessageHandlerWithNoRequestHeadersButReplyHeaders() throws InterruptedException {
 		SpelExpressionParser spelExpressionParser = new SpelExpressionParser();
@@ -197,11 +195,11 @@ public class CamelMessageHandlerTests extends CamelTestSupport {
 
 	private static BeanFactory getBeanFactory() {
 		BeanFactory beanFactory = mock(BeanFactory.class);
-		when(beanFactory.containsBean(eq(INTEGRATION_EVALUATION_CONTEXT_BEAN_NAME)))
+		when(beanFactory.containsBean(eq(IntegrationContextUtils.INTEGRATION_EVALUATION_CONTEXT_BEAN_NAME)))
 				.thenReturn(true);
 		StandardEvaluationContext evaluationContext = new StandardEvaluationContext();
-		evaluationContext.setVariable("exchangePattern", ExchangePattern.InOut);
-		when(beanFactory.getBean(eq(INTEGRATION_EVALUATION_CONTEXT_BEAN_NAME), any(Class.class)))
+		evaluationContext.addPropertyAccessor(new MapAccessor());
+		when(beanFactory.getBean(eq(IntegrationContextUtils.INTEGRATION_EVALUATION_CONTEXT_BEAN_NAME), any(Class.class)))
 				.thenReturn(evaluationContext);
 		return beanFactory;
 	}

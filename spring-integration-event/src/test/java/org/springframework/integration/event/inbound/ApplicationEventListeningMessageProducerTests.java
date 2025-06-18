@@ -42,6 +42,7 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.channel.QueueChannel;
+import org.springframework.integration.context.IntegrationContextUtils;
 import org.springframework.integration.event.core.MessagingEvent;
 import org.springframework.integration.handler.AbstractReplyProducingMessageHandler;
 import org.springframework.integration.test.util.TestUtils;
@@ -52,7 +53,6 @@ import org.springframework.messaging.support.GenericMessage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.springframework.integration.context.IntegrationContextUtils.INTEGRATION_EVALUATION_CONTEXT_BEAN_NAME;
 
 /**
  * @author Mark Fisher
@@ -294,12 +294,11 @@ public class ApplicationEventListeningMessageProducerTests {
 		ctx.close();
 	}
 
-
 	private static void populateBeanFactory(ConfigurableListableBeanFactory beanFactory) {
 		beanFactory.registerSingleton(AbstractApplicationContext.APPLICATION_EVENT_MULTICASTER_BEAN_NAME,
 				new SimpleApplicationEventMulticaster(beanFactory));
 		StandardEvaluationContext evaluationContext = new StandardEvaluationContext();
-		beanFactory.registerSingleton(INTEGRATION_EVALUATION_CONTEXT_BEAN_NAME, evaluationContext);
+		beanFactory.registerSingleton(IntegrationContextUtils.INTEGRATION_EVALUATION_CONTEXT_BEAN_NAME, evaluationContext);
 	}
 
 	@Test
