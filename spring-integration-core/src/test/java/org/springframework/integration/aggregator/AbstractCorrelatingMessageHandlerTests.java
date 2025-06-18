@@ -32,7 +32,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.DirectFieldAccessor;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.integration.IntegrationMessageHeaderAccessor;
 import org.springframework.integration.channel.QueueChannel;
 import org.springframework.integration.store.MessageGroup;
@@ -48,7 +47,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -499,7 +497,7 @@ public class AbstractCorrelatingMessageHandlerTests {
 		QueueChannel discardChannel = new QueueChannel();
 		handler.setDiscardChannel(discardChannel);
 		handler.setExpireTimeout(1);
-		handler.setBeanFactory(mock(BeanFactory.class));
+		handler.setBeanFactory(TestUtils.createTestEvaluationContext());
 		handler.afterPropertiesSet();
 		handler.handleMessageInternal(MessageBuilder.withPayload("test").setCorrelationId("test").build());
 		Thread.sleep(100);
@@ -518,7 +516,7 @@ public class AbstractCorrelatingMessageHandlerTests {
 		handler.setDiscardChannel(discardChannel);
 		handler.setExpireTimeout(100);
 		handler.setExpireDuration(Duration.ofMillis(10));
-		handler.setBeanFactory(mock(BeanFactory.class));
+		handler.setBeanFactory(TestUtils.createTestEvaluationContext());
 		ThreadPoolTaskScheduler taskScheduler = new ThreadPoolTaskScheduler();
 		taskScheduler.afterPropertiesSet();
 		handler.setTaskScheduler(taskScheduler);

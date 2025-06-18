@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2024 the original author or authors.
+ * Copyright 2002-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.channel.QueueChannel;
 import org.springframework.integration.handler.AbstractReplyProducingMessageHandler;
 import org.springframework.integration.support.MessageBuilder;
+import org.springframework.integration.test.util.TestUtils;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessagingException;
@@ -256,6 +257,7 @@ public class AsyncMessagingTemplateTests {
 		channel.subscribe(new EchoHandler(200));
 		AsyncMessagingTemplate template = new AsyncMessagingTemplate();
 		template.setDefaultDestination(channel);
+		template.setBeanFactory(TestUtils.createTestEvaluationContext());
 		long start = System.currentTimeMillis();
 		Future<Message<?>> result = template.asyncSendAndReceive(MessageBuilder.withPayload("test").build());
 		assertThat(result.get()).isNotNull();
@@ -269,6 +271,7 @@ public class AsyncMessagingTemplateTests {
 		DirectChannel channel = new DirectChannel();
 		channel.subscribe(new EchoHandler(200));
 		AsyncMessagingTemplate template = new AsyncMessagingTemplate();
+		template.setBeanFactory(TestUtils.createTestEvaluationContext());
 		long start = System.currentTimeMillis();
 		Future<Message<?>> result = template.asyncSendAndReceive(channel, new GenericMessage<>("test"));
 		assertThat(result.get()).isNotNull();
@@ -302,6 +305,7 @@ public class AsyncMessagingTemplateTests {
 		channel.subscribe(new EchoHandler(200));
 		AsyncMessagingTemplate template = new AsyncMessagingTemplate();
 		template.setDefaultDestination(channel);
+		template.setBeanFactory(TestUtils.createTestEvaluationContext());
 		long start = System.currentTimeMillis();
 		Future<String> result = template.asyncConvertSendAndReceive("test");
 		assertThat(result.get()).isNotNull();
@@ -316,6 +320,7 @@ public class AsyncMessagingTemplateTests {
 		DirectChannel channel = new DirectChannel();
 		channel.subscribe(new EchoHandler(200));
 		AsyncMessagingTemplate template = new AsyncMessagingTemplate();
+		template.setBeanFactory(TestUtils.createTestEvaluationContext());
 		long start = System.currentTimeMillis();
 		Future<String> result = template.asyncConvertSendAndReceive(channel, "test");
 		assertThat(result.get()).isNotNull();
@@ -349,6 +354,7 @@ public class AsyncMessagingTemplateTests {
 		channel.subscribe(new EchoHandler(200));
 		AsyncMessagingTemplate template = new AsyncMessagingTemplate();
 		template.setDefaultDestination(channel);
+		template.setBeanFactory(TestUtils.createTestEvaluationContext());
 		long start = System.currentTimeMillis();
 		Future<String> result = template.asyncConvertSendAndReceive(123, new TestMessagePostProcessor());
 		assertThat(result.get()).isNotNull();
@@ -363,6 +369,7 @@ public class AsyncMessagingTemplateTests {
 		DirectChannel channel = new DirectChannel();
 		channel.subscribe(new EchoHandler(200));
 		AsyncMessagingTemplate template = new AsyncMessagingTemplate();
+		template.setBeanFactory(TestUtils.createTestEvaluationContext());
 		long start = System.currentTimeMillis();
 		Future<String> result = template.asyncConvertSendAndReceive(channel, "test", new TestMessagePostProcessor());
 		assertThat(result.get()).isNotNull();
@@ -395,6 +402,7 @@ public class AsyncMessagingTemplateTests {
 		DirectChannel channel = new DirectChannel();
 		channel.subscribe(new EchoHandler(10000));
 		AsyncMessagingTemplate template = new AsyncMessagingTemplate();
+		template.setBeanFactory(TestUtils.createTestEvaluationContext());
 		template.setDefaultDestination(channel);
 		Future<Message<?>> result = template.asyncSendAndReceive(MessageBuilder.withPayload("test").build());
 		assertThatExceptionOfType(TimeoutException.class)
@@ -406,6 +414,7 @@ public class AsyncMessagingTemplateTests {
 		DirectChannel channel = new DirectChannel();
 		channel.subscribe(new EchoHandler(-1));
 		AsyncMessagingTemplate template = new AsyncMessagingTemplate();
+		template.setBeanFactory(TestUtils.createTestEvaluationContext());
 		template.setDefaultDestination(channel);
 		Future<Message<?>> result = template.asyncSendAndReceive(MessageBuilder.withPayload("test").build());
 		assertThatExceptionOfType(ExecutionException.class)
@@ -419,6 +428,7 @@ public class AsyncMessagingTemplateTests {
 		EchoHandler handler = new EchoHandler(10000);
 		channel.subscribe(handler);
 		AsyncMessagingTemplate template = new AsyncMessagingTemplate();
+		template.setBeanFactory(TestUtils.createTestEvaluationContext());
 		template.setDefaultDestination(channel);
 		Future<Message<?>> result = template.asyncSendAndReceive(MessageBuilder.withPayload("test").build());
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2022 the original author or authors.
+ * Copyright 2015-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.Lifecycle;
 import org.springframework.integration.core.MessagingTemplate;
 import org.springframework.integration.jms.ActiveMQMultiContextTests;
+import org.springframework.integration.test.util.TestUtils;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
@@ -49,6 +50,7 @@ public class StopStartTests extends ActiveMQMultiContextTests {
 	@Test
 	public void test() {
 		MessagingTemplate template = new MessagingTemplate(this.test);
+		template.setBeanFactory(TestUtils.createTestEvaluationContext());
 		this.outGateway.start();
 		assertThat(template.convertSendAndReceive("foo", String.class)).isEqualTo("FOO");
 		this.outGateway.stop();

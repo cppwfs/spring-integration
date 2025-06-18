@@ -49,6 +49,7 @@ import org.springframework.integration.jdbc.channel.PostgresChannelMessageTableS
 import org.springframework.integration.jdbc.channel.PostgresSubscribableChannel;
 import org.springframework.integration.jdbc.store.JdbcChannelMessageStore;
 import org.springframework.integration.jdbc.store.channel.PostgresChannelMessageStoreQueryProvider;
+import org.springframework.integration.test.util.TestUtils;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.init.DataSourceInitializer;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
@@ -130,6 +131,7 @@ public class PostgresChannelMessageTableSubscriberTests implements PostgresConta
 				new PostgresSubscribableChannel(messageStore, groupId, postgresChannelMessageTableSubscriber);
 		this.postgresSubscribableChannel.setBeanName("testPostgresChannel");
 		this.postgresSubscribableChannel.setDispatcherExecutor(this.taskExecutor);
+		this.postgresSubscribableChannel.setBeanFactory(TestUtils.createTestEvaluationContext());
 		this.postgresSubscribableChannel.afterPropertiesSet();
 	}
 

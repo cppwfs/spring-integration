@@ -23,10 +23,10 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.integration.store.MessageGroup;
 import org.springframework.integration.support.AbstractIntegrationMessageBuilder;
 import org.springframework.integration.support.MessageBuilder;
+import org.springframework.integration.test.util.TestUtils;
 import org.springframework.messaging.Message;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -59,7 +59,7 @@ public class ExpressionEvaluatingMessageGroupProcessorTests {
 	public void testProcessAndSendWithSizeExpressionEvaluated() {
 		when(group.getMessages()).thenReturn(messages);
 		processor = new ExpressionEvaluatingMessageGroupProcessor("#root.size()");
-		processor.setBeanFactory(mock(BeanFactory.class));
+		processor.setBeanFactory(TestUtils.createTestEvaluationContext());
 		Object result = processor.processMessageGroup(group);
 		assertThat(result instanceof AbstractIntegrationMessageBuilder<?>).isTrue();
 		Message<?> resultMessage = ((AbstractIntegrationMessageBuilder<?>) result).build();
@@ -70,9 +70,9 @@ public class ExpressionEvaluatingMessageGroupProcessorTests {
 	public void testProcessAndCheckHeaders() {
 		when(group.getMessages()).thenReturn(messages);
 		processor = new ExpressionEvaluatingMessageGroupProcessor("#root");
-		processor.setBeanFactory(mock(BeanFactory.class));
+		processor.setBeanFactory(TestUtils.createTestEvaluationContext());
 		Object result = processor.processMessageGroup(group);
-		processor.setBeanFactory(mock(BeanFactory.class));
+		processor.setBeanFactory(TestUtils.createTestEvaluationContext());
 		assertThat(result instanceof AbstractIntegrationMessageBuilder<?>).isTrue();
 		Message<?> resultMessage = ((AbstractIntegrationMessageBuilder<?>) result).build();
 		assertThat(resultMessage.getHeaders().get("foo")).isEqualTo("bar");
@@ -82,7 +82,7 @@ public class ExpressionEvaluatingMessageGroupProcessorTests {
 	public void testProcessAndSendWithProjectionExpressionEvaluated() {
 		when(group.getMessages()).thenReturn(messages);
 		processor = new ExpressionEvaluatingMessageGroupProcessor("![payload]");
-		processor.setBeanFactory(mock(BeanFactory.class));
+		processor.setBeanFactory(TestUtils.createTestEvaluationContext());
 		Object result = processor.processMessageGroup(group);
 		assertThat(result instanceof AbstractIntegrationMessageBuilder<?>).isTrue();
 		Message<?> resultMessage = ((AbstractIntegrationMessageBuilder<?>) result).build();
@@ -100,7 +100,7 @@ public class ExpressionEvaluatingMessageGroupProcessorTests {
 	public void testProcessAndSendWithFilterAndProjectionExpressionEvaluated() {
 		when(group.getMessages()).thenReturn(messages);
 		processor = new ExpressionEvaluatingMessageGroupProcessor("?[payload>2].![payload]");
-		processor.setBeanFactory(mock(BeanFactory.class));
+		processor.setBeanFactory(TestUtils.createTestEvaluationContext());
 		Object result = processor.processMessageGroup(group);
 		assertThat(result instanceof AbstractIntegrationMessageBuilder<?>).isTrue();
 		Message<?> resultMessage = ((AbstractIntegrationMessageBuilder<?>) result).build();
@@ -117,7 +117,7 @@ public class ExpressionEvaluatingMessageGroupProcessorTests {
 		when(group.getMessages()).thenReturn(messages);
 		processor = new ExpressionEvaluatingMessageGroupProcessor(String.format("T(%s).sum(?[payload>2].![payload])",
 				getClass().getName()));
-		processor.setBeanFactory(mock(BeanFactory.class));
+		processor.setBeanFactory(TestUtils.createTestEvaluationContext());
 		Object result = processor.processMessageGroup(group);
 		assertThat(result instanceof AbstractIntegrationMessageBuilder<?>).isTrue();
 		Message<?> resultMessage = ((AbstractIntegrationMessageBuilder<?>) result).build();

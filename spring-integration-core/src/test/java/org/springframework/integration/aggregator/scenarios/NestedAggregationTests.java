@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.core.MessagingTemplate;
+import org.springframework.integration.test.util.TestUtils;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.GenericMessage;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
@@ -66,6 +67,7 @@ public class NestedAggregationTests {
 	private List<String> sendAndReceiveMessage(DirectChannel channel, int timeout, Message<?> input) {
 		MessagingTemplate messagingTemplate = new MessagingTemplate();
 		messagingTemplate.setReceiveTimeout(timeout);
+		messagingTemplate.setBeanFactory(TestUtils.createTestEvaluationContext());
 
 		@SuppressWarnings("unchecked")
 		Message<List<String>> message = (Message<List<String>>) messagingTemplate.sendAndReceive(channel, input);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 the original author or authors.
+ * Copyright 2015-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import org.springframework.integration.core.MessageSource;
 import org.springframework.integration.core.MessagingTemplate;
 import org.springframework.integration.jdbc.storedproc.PrimeMapper;
 import org.springframework.integration.jdbc.storedproc.ProcedureParameter;
+import org.springframework.integration.test.util.TestUtils;
 import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
@@ -81,6 +82,7 @@ public class StoredProcJavaConfigTests {
 		assertThat(received).isNull();
 		MessagingTemplate template = new MessagingTemplate(this.control);
 		template.convertAndSend("'storedProc.inboundChannelAdapter'.stop");
+		template.setBeanFactory(TestUtils.createTestEvaluationContext());
 		assertThat(template.convertSendAndReceive(
 				"'storedProc.inboundChannelAdapter'.isRunning", Boolean.class))
 				.isFalse();

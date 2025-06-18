@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2024 the original author or authors.
+ * Copyright 2002-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import org.springframework.beans.DirectFieldAccessor;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.expression.common.LiteralExpression;
@@ -92,7 +91,7 @@ public class FtpOutboundTests {
 		FileTransferringMessageHandler<FTPFile> handler = new FileTransferringMessageHandler<>(sessionFactory);
 		handler.setRemoteDirectoryExpression(new LiteralExpression("remote-target-dir"));
 		handler.setFileNameGenerator(message -> "handlerContent.test");
-		handler.setBeanFactory(mock(BeanFactory.class));
+		handler.setBeanFactory(TestUtils.createTestEvaluationContext());
 		handler.afterPropertiesSet();
 		handler.handleMessage(new GenericMessage<>("String data"));
 		assertThat(file.exists()).isTrue();
@@ -111,7 +110,7 @@ public class FtpOutboundTests {
 		FileTransferringMessageHandler<FTPFile> handler = new FileTransferringMessageHandler<>(sessionFactory);
 		handler.setRemoteDirectoryExpression(new LiteralExpression("remote-target-dir"));
 		handler.setFileNameGenerator(message -> "handlerContent.test");
-		handler.setBeanFactory(mock(BeanFactory.class));
+		handler.setBeanFactory(TestUtils.createTestEvaluationContext());
 		handler.afterPropertiesSet();
 		handler.handleMessage(new GenericMessage<>("byte[] data".getBytes()));
 		assertThat(file.exists()).isTrue();
@@ -128,7 +127,7 @@ public class FtpOutboundTests {
 		FileTransferringMessageHandler<FTPFile> handler = new FileTransferringMessageHandler<>(sessionFactory);
 		handler.setRemoteDirectoryExpression(new LiteralExpression(targetDir.getName()));
 		handler.setFileNameGenerator(message -> ((File) message.getPayload()).getName() + ".test");
-		handler.setBeanFactory(mock(BeanFactory.class));
+		handler.setBeanFactory(TestUtils.createTestEvaluationContext());
 		handler.afterPropertiesSet();
 
 		File srcFile = File.createTempFile("testHandleFileMessage", ".tmp");
@@ -149,7 +148,7 @@ public class FtpOutboundTests {
 		FileTransferringMessageHandler<FTPFile> handler = new FileTransferringMessageHandler<FTPFile>(sessionFactory);
 		handler.setRemoteDirectoryExpression(new LiteralExpression(targetDir.getName()));
 		handler.setFileNameGenerator(message -> ((File) message.getPayload()).getName() + ".test");
-		handler.setBeanFactory(mock(BeanFactory.class));
+		handler.setBeanFactory(TestUtils.createTestEvaluationContext());
 		handler.afterPropertiesSet();
 
 		File srcFile = new File(UUID.randomUUID() + ".txt");

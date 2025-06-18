@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2024 the original author or authors.
+ * Copyright 2002-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.SpelParserConfiguration;
@@ -107,14 +106,14 @@ public class FtpInboundRemoteFileSystemSynchronizerTests {
 		ExpressionParser expressionParser = new SpelExpressionParser(new SpelParserConfiguration(true, true));
 		Expression expression = expressionParser.parseExpression("'subdir/' + #this.toUpperCase() + '.a'");
 		synchronizer.setLocalFilenameGeneratorExpression(expression);
-		synchronizer.setBeanFactory(mock(BeanFactory.class));
+		synchronizer.setBeanFactory(TestUtils.createTestEvaluationContext());
 		synchronizer.afterPropertiesSet();
 
 		FtpInboundFileSynchronizingMessageSource ms = new FtpInboundFileSynchronizingMessageSource(synchronizer);
 
 		ms.setAutoCreateLocalDirectory(true);
 		ms.setLocalDirectory(localDirectory);
-		ms.setBeanFactory(mock(BeanFactory.class));
+		ms.setBeanFactory(TestUtils.createTestEvaluationContext());
 		CompositeFileListFilter<File> localFileListFilter = new CompositeFileListFilter<>();
 		localFileListFilter.addFilter(new RegexPatternFileListFilter(".*\\.TEST\\.a$"));
 		AcceptOnceFileListFilter<File> localAcceptOnceFilter = new AcceptOnceFileListFilter<>();
@@ -179,7 +178,7 @@ public class FtpInboundRemoteFileSystemSynchronizerTests {
 		FtpInboundFileSynchronizer synchronizer = spy(new FtpInboundFileSynchronizer(ftpSessionFactory));
 		synchronizer.setRemoteDirectory("remote-test-dir");
 
-		synchronizer.setBeanFactory(mock(BeanFactory.class));
+		synchronizer.setBeanFactory(TestUtils.createTestEvaluationContext());
 		synchronizer.afterPropertiesSet();
 
 		synchronizer.synchronizeToLocalDirectory(localDirectory);

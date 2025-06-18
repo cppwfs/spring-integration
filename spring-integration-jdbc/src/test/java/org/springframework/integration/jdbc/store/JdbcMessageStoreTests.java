@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2024 the original author or authors.
+ * Copyright 2002-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContextException;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.annotation.SynthesizingMethodParameter;
@@ -561,7 +560,7 @@ public class JdbcMessageStoreTests {
 		JdbcMessageStore pooledMessageStore = new JdbcMessageStore(poolingDataSource);
 
 		CollectionArgumentResolver collectionArgumentResolver = new CollectionArgumentResolver(true);
-		collectionArgumentResolver.setBeanFactory(new DefaultListableBeanFactory());
+		collectionArgumentResolver.setBeanFactory(TestUtils.createTestEvaluationContext());
 		Method methodForCollectionOfPayloads = getClass().getMethod("methodForCollectionOfPayloads", Collection.class);
 		MethodParameter methodParameter = SynthesizingMethodParameter.forExecutable(methodForCollectionOfPayloads, 0);
 

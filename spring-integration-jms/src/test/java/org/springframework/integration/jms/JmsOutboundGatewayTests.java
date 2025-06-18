@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2024 the original author or authors.
+ * Copyright 2002-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.jupiter.api.Test;
 
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.integration.channel.QueueChannel;
 import org.springframework.integration.expression.ValueExpression;
@@ -74,7 +73,7 @@ public class JmsOutboundGatewayTests extends ActiveMQMultiContextTests {
 		gateway.setRequestDestinationName("foo");
 		gateway.setUseReplyContainer(true);
 		gateway.setReplyContainerProperties(new ReplyContainerProperties());
-		gateway.setBeanFactory(mock(BeanFactory.class));
+		gateway.setBeanFactory(TestUtils.createTestEvaluationContext());
 		gateway.afterPropertiesSet();
 		assertThat(TestUtils.getPropertyValue(gateway, "replyContainer.beanName"))
 				.isEqualTo("JMS_OutboundGateway@" + ObjectUtils.getIdentityHexString(gateway) +
@@ -165,7 +164,7 @@ public class JmsOutboundGatewayTests extends ActiveMQMultiContextTests {
 		gateway.setReplyDestinationExpression(new ValueExpression<>(replyQ));
 		QueueChannel queueChannel = new QueueChannel();
 		gateway.setOutputChannel(queueChannel);
-		gateway.setBeanFactory(mock(BeanFactory.class));
+		gateway.setBeanFactory(TestUtils.createTestEvaluationContext());
 		gateway.setReceiveTimeout(60000);
 		gateway.afterPropertiesSet();
 		gateway.start();
@@ -211,7 +210,7 @@ public class JmsOutboundGatewayTests extends ActiveMQMultiContextTests {
 		gateway.setReplyDestinationName(replyQ);
 		QueueChannel queueChannel = new QueueChannel();
 		gateway.setOutputChannel(queueChannel);
-		gateway.setBeanFactory(mock(BeanFactory.class));
+		gateway.setBeanFactory(TestUtils.createTestEvaluationContext());
 		gateway.setReceiveTimeout(60000);
 		gateway.setCorrelationKey("JMSCorrelationID");
 		gateway.afterPropertiesSet();

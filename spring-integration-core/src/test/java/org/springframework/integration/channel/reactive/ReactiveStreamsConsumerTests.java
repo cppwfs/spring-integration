@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 the original author or authors.
+ * Copyright 2016-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,8 @@ import reactor.util.Loggers;
 import org.springframework.beans.DirectFieldAccessor;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.expression.MapAccessor;
+import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.channel.FluxMessageChannel;
 import org.springframework.integration.channel.QueueChannel;
@@ -57,11 +59,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Artem Bilan
@@ -85,9 +89,9 @@ public class ReactiveStreamsConsumerTests {
 		};
 
 		MessageHandler testSubscriber = new MethodInvokingMessageHandler(messageHandler, (String) null);
-		((MethodInvokingMessageHandler) testSubscriber).setBeanFactory(mock(BeanFactory.class));
+		((MethodInvokingMessageHandler) testSubscriber).setBeanFactory(createTestEvaluationContext());
 		ReactiveStreamsConsumer reactiveConsumer = new ReactiveStreamsConsumer(testChannel, testSubscriber);
-		reactiveConsumer.setBeanFactory(mock(BeanFactory.class));
+		reactiveConsumer.setBeanFactory(createTestEvaluationContext());
 		reactiveConsumer.afterPropertiesSet();
 		reactiveConsumer.start();
 
@@ -144,7 +148,7 @@ public class ReactiveStreamsConsumerTests {
 		});
 
 		ReactiveStreamsConsumer reactiveConsumer = new ReactiveStreamsConsumer(testChannel, testSubscriber);
-		reactiveConsumer.setBeanFactory(mock(BeanFactory.class));
+		reactiveConsumer.setBeanFactory(createTestEvaluationContext());
 		reactiveConsumer.afterPropertiesSet();
 		reactiveConsumer.start();
 
@@ -199,7 +203,7 @@ public class ReactiveStreamsConsumerTests {
 		publisher = publisher.log(Loggers.getLogger(ReactiveStreamsConsumerTests.class));
 		dfa.setPropertyValue("publisher", publisher);
 
-		reactiveConsumer.setBeanFactory(mock(BeanFactory.class));
+		reactiveConsumer.setBeanFactory(createTestEvaluationContext());
 		reactiveConsumer.afterPropertiesSet();
 		reactiveConsumer.start();
 
@@ -306,7 +310,7 @@ public class ReactiveStreamsConsumerTests {
 				};
 
 		ReactiveStreamsConsumer reactiveConsumer = new ReactiveStreamsConsumer(testChannel, messageHandler);
-		reactiveConsumer.setBeanFactory(mock(BeanFactory.class));
+		reactiveConsumer.setBeanFactory(createTestEvaluationContext());
 		reactiveConsumer.afterPropertiesSet();
 		reactiveConsumer.start();
 
@@ -364,6 +368,18 @@ public class ReactiveStreamsConsumerTests {
 
 		assertThat(result.get()).isSameAs(testMessage);
 		assertThat(spied.get()).isSameAs(testMessage);
+	}
+
+	private static BeanFactory createTestEvaluationContext() {
+		final String integrationEvaluationContextBeanName = "integrationEvaluationContext";
+		BeanFactory beanFactory = mock(BeanFactory.class);
+		when(beanFactory.containsBean(eq(integrationEvaluationContextBeanName)))
+				.thenReturn(true);
+		StandardEvaluationContext evaluationContext = new StandardEvaluationContext();
+		evaluationContext.addPropertyAccessor(new MapAccessor());
+		when(beanFactory.getBean(eq(integrationEvaluationContextBeanName), any(Class.class)))
+				.thenReturn(evaluationContext);
+		return beanFactory;
 	}
 
 }

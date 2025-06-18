@@ -297,8 +297,7 @@ public class ApplicationEventListeningMessageProducerTests {
 	private static void populateBeanFactory(ConfigurableListableBeanFactory beanFactory) {
 		beanFactory.registerSingleton(AbstractApplicationContext.APPLICATION_EVENT_MULTICASTER_BEAN_NAME,
 				new SimpleApplicationEventMulticaster(beanFactory));
-		StandardEvaluationContext evaluationContext = new StandardEvaluationContext();
-		beanFactory.registerSingleton(IntegrationContextUtils.INTEGRATION_EVALUATION_CONTEXT_BEAN_NAME, evaluationContext);
+beanFactory.registerSingleton(IntegrationContextUtils.INTEGRATION_EVALUATION_CONTEXT_BEAN_NAME, new StandardEvaluationContext());
 	}
 
 	@Test

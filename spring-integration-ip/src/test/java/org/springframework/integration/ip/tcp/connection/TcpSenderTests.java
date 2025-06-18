@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 
+import org.springframework.integration.test.util.TestUtils;
 import org.springframework.scheduling.concurrent.SimpleAsyncTaskScheduler;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,6 +48,7 @@ public class TcpSenderTests {
 		TcpNetServerConnectionFactory server = new TcpNetServerConnectionFactory(0);
 		server.setTaskScheduler(new SimpleAsyncTaskScheduler());
 		server.registerListener(msg -> false);
+		server.setBeanFactory(TestUtils.createTestEvaluationContext());
 		server.afterPropertiesSet();
 		server.setApplicationEventPublisher(event -> {
 			if (event instanceof TcpConnectionServerListeningEvent) {
@@ -65,6 +67,7 @@ public class TcpSenderTests {
 		CountDownLatch latch = new CountDownLatch(1);
 		TcpNetServerConnectionFactory server = new TcpNetServerConnectionFactory(0);
 		server.setTaskScheduler(new SimpleAsyncTaskScheduler());
+		server.setBeanFactory(TestUtils.createTestEvaluationContext());
 		server.registerListener(msg -> false);
 		server.afterPropertiesSet();
 		server.setApplicationEventPublisher(event -> {
@@ -144,6 +147,7 @@ public class TcpSenderTests {
 
 		});
 		client.setSingleUse(true);
+		client.setBeanFactory(TestUtils.createTestEvaluationContext());
 		client.afterPropertiesSet();
 		client.start();
 		TcpConnectionSupport conn = client.getConnection();

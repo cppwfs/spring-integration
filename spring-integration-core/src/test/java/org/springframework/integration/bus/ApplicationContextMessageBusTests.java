@@ -25,7 +25,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.integration.MessageDispatchingException;
 import org.springframework.integration.channel.PublishSubscribeChannel;
@@ -49,7 +48,6 @@ import org.springframework.util.ClassUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.mockito.Mockito.mock;
 
 /**
  * @author Mark Fisher
@@ -96,7 +94,7 @@ public class ApplicationContextMessageBusTests {
 		handler.setBeanFactory(this.context);
 		handler.afterPropertiesSet();
 		PollingConsumer endpoint = new PollingConsumer(sourceChannel, handler);
-		endpoint.setBeanFactory(mock(BeanFactory.class));
+		endpoint.setBeanFactory(TestUtils.createTestEvaluationContext());
 		this.context.registerEndpoint("testEndpoint", endpoint);
 		this.context.refresh();
 		sourceChannel.send(message);
@@ -160,9 +158,9 @@ public class ApplicationContextMessageBusTests {
 		handler1.setOutputChannel(outputChannel1);
 		handler2.setOutputChannel(outputChannel2);
 		PollingConsumer endpoint1 = new PollingConsumer(inputChannel, handler1);
-		endpoint1.setBeanFactory(mock(BeanFactory.class));
+		endpoint1.setBeanFactory(TestUtils.createTestEvaluationContext());
 		PollingConsumer endpoint2 = new PollingConsumer(inputChannel, handler2);
-		endpoint2.setBeanFactory(mock(BeanFactory.class));
+		endpoint2.setBeanFactory(TestUtils.createTestEvaluationContext());
 		this.context.registerEndpoint("testEndpoint1", endpoint1);
 		this.context.registerEndpoint("testEndpoint2", endpoint2);
 		this.context.refresh();
@@ -248,7 +246,7 @@ public class ApplicationContextMessageBusTests {
 			}
 		};
 		PollingConsumer endpoint = new PollingConsumer(errorChannel, handler);
-		endpoint.setBeanFactory(mock(BeanFactory.class));
+		endpoint.setBeanFactory(TestUtils.createTestEvaluationContext());
 		this.context.registerEndpoint("testEndpoint", endpoint);
 		this.context.refresh();
 		errorChannel.send(new ErrorMessage(new RuntimeException("test-exception")));

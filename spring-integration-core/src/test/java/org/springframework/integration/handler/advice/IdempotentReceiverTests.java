@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2024 the original author or authors.
+ * Copyright 2014-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.beans.factory.BeanFactory;
@@ -80,7 +79,7 @@ public class IdempotentReceiverTests {
 		ConcurrentMetadataStore store = new SimpleMetadataStore();
 		ExpressionEvaluatingMessageProcessor<String> idempotentKeyStrategy =
 				new ExpressionEvaluatingMessageProcessor<>(new SpelExpressionParser().parseExpression("payload"));
-		BeanFactory beanFactory = Mockito.mock(BeanFactory.class);
+		BeanFactory beanFactory = TestUtils.createTestEvaluationContext();
 		idempotentKeyStrategy.setBeanFactory(beanFactory);
 		IdempotentReceiverInterceptor idempotentReceiverInterceptor =
 				new IdempotentReceiverInterceptor(new MetadataStoreSelector(idempotentKeyStrategy, store));

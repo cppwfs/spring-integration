@@ -19,6 +19,8 @@ package org.springframework.integration.handler;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.context.expression.MapAccessor;
+import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.integration.IntegrationMessageHeaderAccessor;
 import org.springframework.integration.channel.QueueChannel;
 import org.springframework.integration.support.MessageBuilder;
@@ -28,7 +30,10 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.handler.annotation.Header;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Mark Fisher
@@ -44,7 +49,7 @@ public class HeaderAnnotationTransformerTests {
 		Object target = new TestTransformer();
 		MethodInvokingTransformer transformer = new MethodInvokingTransformer(target, "appendCorrelationId");
 		MessageTransformingHandler handler = new MessageTransformingHandler(transformer);
-		handler.setBeanFactory(mock(BeanFactory.class));
+		handler.setBeanFactory(createTestEvaluationContext());
 		handler.afterPropertiesSet();
 		QueueChannel outputChannel = new QueueChannel();
 		handler.setOutputChannel(outputChannel);
@@ -60,7 +65,7 @@ public class HeaderAnnotationTransformerTests {
 		Object target = new TestTransformer();
 		MethodInvokingTransformer transformer = new MethodInvokingTransformer(target, "evalCorrelationId");
 		MessageTransformingHandler handler = new MessageTransformingHandler(transformer);
-		handler.setBeanFactory(mock(BeanFactory.class));
+		handler.setBeanFactory(createTestEvaluationContext());
 		handler.afterPropertiesSet();
 		QueueChannel outputChannel = new QueueChannel();
 		handler.setOutputChannel(outputChannel);
@@ -76,7 +81,7 @@ public class HeaderAnnotationTransformerTests {
 		Object target = new TestTransformer();
 		MethodInvokingTransformer transformer = new MethodInvokingTransformer(target, "appendFoo");
 		MessageTransformingHandler handler = new MessageTransformingHandler(transformer);
-		handler.setBeanFactory(mock(BeanFactory.class));
+		handler.setBeanFactory(createTestEvaluationContext());
 		handler.afterPropertiesSet();
 		QueueChannel outputChannel = new QueueChannel();
 		handler.setOutputChannel(outputChannel);
@@ -92,7 +97,7 @@ public class HeaderAnnotationTransformerTests {
 		Object target = new TestTransformer();
 		MethodInvokingTransformer transformer = new MethodInvokingTransformer(target, "evalFoo");
 		MessageTransformingHandler handler = new MessageTransformingHandler(transformer);
-		handler.setBeanFactory(mock(BeanFactory.class));
+		handler.setBeanFactory(createTestEvaluationContext());
 		handler.afterPropertiesSet();
 		QueueChannel outputChannel = new QueueChannel();
 		handler.setOutputChannel(outputChannel);
@@ -108,7 +113,7 @@ public class HeaderAnnotationTransformerTests {
 		Object target = new TestTransformer();
 		MethodInvokingTransformer transformer = new MethodInvokingTransformer(target, "evalFoo");
 		MessageTransformingHandler handler = new MessageTransformingHandler(transformer);
-		handler.setBeanFactory(mock(BeanFactory.class));
+		handler.setBeanFactory(createTestEvaluationContext());
 		handler.setNotPropagatedHeaders(IntegrationMessageHeaderAccessor.CORRELATION_ID);
 		handler.afterPropertiesSet();
 		QueueChannel outputChannel = new QueueChannel();
@@ -122,6 +127,18 @@ public class HeaderAnnotationTransformerTests {
 		assertThat(result).isNotNull();
 		assertThat(result.getPayload()).isEqualTo("BAR");
 		assertThat(result.getHeaders().containsKey(IntegrationMessageHeaderAccessor.CORRELATION_ID)).isFalse();
+	}
+
+	private static BeanFactory createTestEvaluationContext() {
+		final String integrationEvaluationContextBeanName = "integrationEvaluationContext";
+		BeanFactory beanFactory = mock(BeanFactory.class);
+		when(beanFactory.containsBean(eq(integrationEvaluationContextBeanName)))
+				.thenReturn(true);
+		StandardEvaluationContext evaluationContext = new StandardEvaluationContext();
+		evaluationContext.addPropertyAccessor(new MapAccessor());
+		when(beanFactory.getBean(eq(integrationEvaluationContextBeanName), any(Class.class)))
+				.thenReturn(evaluationContext);
+		return beanFactory;
 	}
 
 	public static class TestTransformer {

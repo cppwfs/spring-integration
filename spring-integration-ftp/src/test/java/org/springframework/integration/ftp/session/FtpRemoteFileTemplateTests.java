@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2023 the original author or authors.
+ * Copyright 2014-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.junit.jupiter.api.Test;
 
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -67,12 +66,12 @@ public class FtpRemoteFileTemplateTests extends FtpTestSupport {
 	public void testINT3412AppendStatRmdir() {
 		FtpRemoteFileTemplate template = new FtpRemoteFileTemplate(sessionFactory);
 		DefaultFileNameGenerator fileNameGenerator = new DefaultFileNameGenerator();
-		fileNameGenerator.setBeanFactory(mock(BeanFactory.class));
+		fileNameGenerator.setBeanFactory(TestUtils.createTestEvaluationContext());
 		fileNameGenerator.setExpression("'foobar.txt'");
 		template.setFileNameGenerator(fileNameGenerator);
 		template.setRemoteDirectoryExpression(new LiteralExpression("foo/"));
 		template.setUseTemporaryFileName(false);
-		template.setBeanFactory(mock(BeanFactory.class));
+		template.setBeanFactory(TestUtils.createTestEvaluationContext());
 		template.afterPropertiesSet();
 		template.execute(session -> {
 			session.mkdir("foo/");
@@ -125,7 +124,7 @@ public class FtpRemoteFileTemplateTests extends FtpTestSupport {
 		FtpRemoteFileTemplate template = new FtpRemoteFileTemplate(this.sessionFactory);
 		template.setRemoteDirectoryExpression(new LiteralExpression("/"));
 		template.setExistsMode(FtpRemoteFileTemplate.ExistsMode.NLST_AND_DIRS);
-		template.setBeanFactory(mock(BeanFactory.class));
+		template.setBeanFactory(TestUtils.createTestEvaluationContext());
 		template.afterPropertiesSet();
 		File file = new File(System.getProperty("java.io.tmpdir"), UUID.randomUUID().toString());
 		FileOutputStream fileOutputStream = new FileOutputStream(file);

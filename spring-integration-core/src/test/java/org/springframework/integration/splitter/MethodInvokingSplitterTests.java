@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2024 the original author or authors.
+ * Copyright 2002-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,19 +28,18 @@ import org.aopalliance.intercept.MethodInterceptor;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.aop.framework.ProxyFactory;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.integration.IntegrationMessageHeaderAccessor;
 import org.springframework.integration.annotation.Splitter;
 import org.springframework.integration.channel.QueueChannel;
 import org.springframework.integration.support.AbstractIntegrationMessageBuilder;
 import org.springframework.integration.support.MessageBuilder;
+import org.springframework.integration.test.util.TestUtils;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.support.GenericMessage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.mockito.Mockito.mock;
 
 /**
  * @author Mark Fisher
@@ -155,7 +154,7 @@ public class MethodInvokingSplitterTests {
 		MethodInvokingSplitter splitter = new MethodInvokingSplitter(testBean, "messageToMessageBuilderList");
 		QueueChannel replyChannel = new QueueChannel();
 		splitter.setOutputChannel(replyChannel);
-		splitter.setBeanFactory(mock(BeanFactory.class));
+		splitter.setBeanFactory(TestUtils.createTestEvaluationContext());
 		splitter.afterPropertiesSet();
 		splitter.handleMessage(message);
 		List<Message<?>> replies = replyChannel.clear();
@@ -242,7 +241,7 @@ public class MethodInvokingSplitterTests {
 		MethodInvokingSplitter splitter = new MethodInvokingSplitter(testBean, "messageToStringArray");
 		QueueChannel replyChannel = new QueueChannel();
 		splitter.setOutputChannel(replyChannel);
-		splitter.setBeanFactory(mock(BeanFactory.class));
+		splitter.setBeanFactory(TestUtils.createTestEvaluationContext());
 		splitter.afterPropertiesSet();
 		splitter.handleMessage(message);
 		List<Message<?>> replies = replyChannel.clear();
@@ -324,7 +323,7 @@ public class MethodInvokingSplitterTests {
 		MethodInvokingSplitter splitter = new MethodInvokingSplitter(testBean, "stringToMessageList");
 		QueueChannel replyChannel = new QueueChannel();
 		splitter.setOutputChannel(replyChannel);
-		splitter.setBeanFactory(mock(BeanFactory.class));
+		splitter.setBeanFactory(TestUtils.createTestEvaluationContext());
 		splitter.afterPropertiesSet();
 		splitter.handleMessage(message);
 		List<Message<?>> replies = replyChannel.clear();
@@ -351,7 +350,7 @@ public class MethodInvokingSplitterTests {
 		MethodInvokingSplitter splitter = new MethodInvokingSplitter(new ListSplitter(), "split");
 		QueueChannel replyChannel = new QueueChannel();
 		splitter.setOutputChannel(replyChannel);
-		splitter.setBeanFactory(mock(BeanFactory.class));
+		splitter.setBeanFactory(TestUtils.createTestEvaluationContext());
 		splitter.afterPropertiesSet();
 		splitter.handleMessage(message);
 		List<Message<?>> replies = replyChannel.clear();
@@ -390,7 +389,7 @@ public class MethodInvokingSplitterTests {
 		MethodInvokingSplitter splitter = new MethodInvokingSplitter(new StreamSplitter(), "split");
 		QueueChannel replyChannel = new QueueChannel();
 		splitter.setOutputChannel(replyChannel);
-		splitter.setBeanFactory(mock(BeanFactory.class));
+		splitter.setBeanFactory(TestUtils.createTestEvaluationContext());
 		splitter.afterPropertiesSet();
 		splitter.handleMessage(message);
 		List<Message<?>> replies = replyChannel.clear();
@@ -471,7 +470,7 @@ public class MethodInvokingSplitterTests {
 		MethodInvokingSplitter splitter = new MethodInvokingSplitter(testBean, splittingMethod);
 		QueueChannel replyChannel = new QueueChannel();
 		splitter.setOutputChannel(replyChannel);
-		splitter.setBeanFactory(mock(BeanFactory.class));
+		splitter.setBeanFactory(TestUtils.createTestEvaluationContext());
 		splitter.afterPropertiesSet();
 		splitter.handleMessage(message);
 		List<Message<?>> replies = replyChannel.clear();
@@ -496,7 +495,7 @@ public class MethodInvokingSplitterTests {
 		MethodInvokingSplitter splitter = new MethodInvokingSplitter(annotatedBean);
 		QueueChannel replyChannel = new QueueChannel();
 		splitter.setOutputChannel(replyChannel);
-		splitter.setBeanFactory(mock(BeanFactory.class));
+		splitter.setBeanFactory(TestUtils.createTestEvaluationContext());
 		splitter.afterPropertiesSet();
 		splitter.handleMessage(message);
 		List<Message<?>> replies = replyChannel.clear();
@@ -521,7 +520,7 @@ public class MethodInvokingSplitterTests {
 		MethodInvokingSplitter splitter = new MethodInvokingSplitter(testBean);
 		QueueChannel replyChannel = new QueueChannel();
 		splitter.setOutputChannel(replyChannel);
-		splitter.setBeanFactory(mock(BeanFactory.class));
+		splitter.setBeanFactory(TestUtils.createTestEvaluationContext());
 		splitter.afterPropertiesSet();
 		splitter.handleMessage(message);
 		List<Message<?>> replies = replyChannel.clear();
@@ -543,7 +542,7 @@ public class MethodInvokingSplitterTests {
 		Class<?> paramType = methodName.startsWith("message") ? Message.class : String.class;
 		Method splittingMethod = this.testBean.getClass().getMethod(methodName, paramType);
 		MethodInvokingSplitter methodInvokingSplitter = new MethodInvokingSplitter(this.testBean, splittingMethod);
-		methodInvokingSplitter.setBeanFactory(mock(BeanFactory.class));
+		methodInvokingSplitter.setBeanFactory(TestUtils.createTestEvaluationContext());
 		methodInvokingSplitter.afterPropertiesSet();
 		return methodInvokingSplitter;
 	}

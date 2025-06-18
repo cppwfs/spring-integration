@@ -20,13 +20,12 @@ import java.lang.reflect.Method;
 
 import org.junit.jupiter.api.Test;
 
-import org.springframework.beans.factory.BeanFactory;
+import org.springframework.integration.test.util.TestUtils;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.GenericMessage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.mockito.Mockito.mock;
 
 /**
  * @author Mark Fisher
@@ -39,7 +38,7 @@ public class MethodInvokingSelectorTests {
 	@Test
 	public void acceptedWithMethodName() {
 		MethodInvokingSelector selector = new MethodInvokingSelector(new TestBean(), "acceptString");
-		selector.setBeanFactory(mock(BeanFactory.class));
+		selector.setBeanFactory(TestUtils.createTestEvaluationContext());
 		assertThat(selector.accept(new GenericMessage<>("should accept"))).isTrue();
 	}
 
@@ -48,14 +47,14 @@ public class MethodInvokingSelectorTests {
 		TestBean testBean = new TestBean();
 		Method method = testBean.getClass().getMethod("acceptString", Message.class);
 		MethodInvokingSelector selector = new MethodInvokingSelector(testBean, method);
-		selector.setBeanFactory(mock(BeanFactory.class));
+		selector.setBeanFactory(TestUtils.createTestEvaluationContext());
 		assertThat(selector.accept(new GenericMessage<>("should accept"))).isTrue();
 	}
 
 	@Test
 	public void rejectedWithMethodName() {
 		MethodInvokingSelector selector = new MethodInvokingSelector(new TestBean(), "acceptString");
-		selector.setBeanFactory(mock(BeanFactory.class));
+		selector.setBeanFactory(TestUtils.createTestEvaluationContext());
 		assertThat(selector.accept(new GenericMessage<>(99))).isFalse();
 	}
 
@@ -64,14 +63,14 @@ public class MethodInvokingSelectorTests {
 		TestBean testBean = new TestBean();
 		Method method = testBean.getClass().getMethod("acceptString", Message.class);
 		MethodInvokingSelector selector = new MethodInvokingSelector(testBean, method);
-		selector.setBeanFactory(mock(BeanFactory.class));
+		selector.setBeanFactory(TestUtils.createTestEvaluationContext());
 		assertThat(selector.accept(new GenericMessage<>(99))).isFalse();
 	}
 
 	@Test
 	public void noArgMethodWithMethodName() {
 		MethodInvokingSelector selector = new MethodInvokingSelector(new TestBean(), "noArgs");
-		selector.setBeanFactory(mock(BeanFactory.class));
+		selector.setBeanFactory(TestUtils.createTestEvaluationContext());
 		assertThat(selector.accept(new GenericMessage<>("test"))).isTrue();
 	}
 
@@ -80,14 +79,14 @@ public class MethodInvokingSelectorTests {
 		TestBean testBean = new TestBean();
 		Method method = testBean.getClass().getMethod("noArgs");
 		MethodInvokingSelector selector = new MethodInvokingSelector(testBean, method);
-		selector.setBeanFactory(mock(BeanFactory.class));
+		selector.setBeanFactory(TestUtils.createTestEvaluationContext());
 		assertThat(selector.accept(new GenericMessage<>("test"))).isTrue();
 	}
 
 	@Test
 	public void voidReturningMethodWithMethodName() {
 		MethodInvokingSelector selector = new MethodInvokingSelector(new TestBean(), "returnVoid");
-		selector.setBeanFactory(mock(BeanFactory.class));
+		selector.setBeanFactory(TestUtils.createTestEvaluationContext());
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> selector.accept(new GenericMessage<>("test")));
 	}

@@ -224,10 +224,12 @@ public class AsyncHandlerTests {
 		DirectChannel input = new DirectChannel();
 		gpfb.setDefaultRequestChannel(input);
 		gpfb.setDefaultReplyTimeout(10000L);
+		gpfb.setBeanFactory(TestUtils.createTestEvaluationContext());
 		gpfb.afterPropertiesSet();
 		Foo foo = gpfb.getObject();
 		this.handler.setOutputChannel(null);
 		EventDrivenConsumer consumer = new EventDrivenConsumer(input, this.handler);
+		consumer.setBeanFactory(TestUtils.createTestEvaluationContext());
 		consumer.afterPropertiesSet();
 		consumer.start();
 		this.latch.countDown();
@@ -244,10 +246,12 @@ public class AsyncHandlerTests {
 		DirectChannel input = new DirectChannel();
 		gpfb.setDefaultRequestChannel(input);
 		gpfb.setDefaultReplyTimeout(10000L);
+		gpfb.setBeanFactory(TestUtils.createTestEvaluationContext());
 		gpfb.afterPropertiesSet();
 		Foo foo = gpfb.getObject();
 		this.handler.setOutputChannel(null);
 		EventDrivenConsumer consumer = new EventDrivenConsumer(input, this.handler);
+		consumer.setBeanFactory(TestUtils.createTestEvaluationContext());
 		consumer.afterPropertiesSet();
 		consumer.start();
 		this.latch.countDown();

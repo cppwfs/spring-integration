@@ -49,6 +49,7 @@ import org.springframework.integration.support.json.Jackson2JsonMessageParser;
 import org.springframework.integration.support.json.JsonInboundMessageMapper;
 import org.springframework.integration.support.json.JsonOutboundMessageMapper;
 import org.springframework.integration.test.util.OnlyOnceTrigger;
+import org.springframework.integration.test.util.TestUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlOutParameter;
 import org.springframework.jdbc.core.SqlParameter;
@@ -65,7 +66,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 
 /**
  * @author Jiandong Ma
@@ -221,7 +221,7 @@ class JdbcTests {
 		@Bean
 		public IntegrationFlow inboundFlow(DataSource h2DataSource) {
 			var sqlParameterSourceFactory = new ExpressionEvaluatingSqlParameterSourceFactory();
-			sqlParameterSourceFactory.setBeanFactory(mock());
+			sqlParameterSourceFactory.setBeanFactory(TestUtils.createTestEvaluationContext());
 			return IntegrationFlow.from(Jdbc.inboundAdapter(h2DataSource, "select * from inbound")
 									.maxRows(2)
 									.rowMapper((rs, rowNum) -> new Inbound(rs.getInt(1), rs.getInt(2)))

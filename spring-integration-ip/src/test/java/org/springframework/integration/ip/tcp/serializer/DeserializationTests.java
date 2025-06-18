@@ -30,7 +30,6 @@ import javax.net.ServerSocketFactory;
 
 import org.junit.jupiter.api.Test;
 
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.core.serializer.DefaultDeserializer;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.integration.channel.QueueChannel;
@@ -41,6 +40,7 @@ import org.springframework.integration.ip.tcp.connection.TcpNioServerConnectionF
 import org.springframework.integration.ip.util.SocketTestUtils;
 import org.springframework.integration.ip.util.TestingUtilities;
 import org.springframework.integration.support.MessageBuilder;
+import org.springframework.integration.test.util.TestUtils;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.GenericMessage;
@@ -50,7 +50,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatException;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIOException;
-import static org.mockito.Mockito.mock;
 
 /**
  * @author Gary Russell
@@ -322,13 +321,14 @@ public class DeserializationTests {
 		});
 		ByteArrayLengthHeaderSerializer lengthHeaderSerializer = new ByteArrayLengthHeaderSerializer(1);
 		serverNio.setDeserializer(lengthHeaderSerializer);
+		serverNio.setBeanFactory(TestUtils.createTestEvaluationContext());
 		serverNio.setSerializer(serializer);
 		serverNio.afterPropertiesSet();
 		TcpInboundGateway in = new TcpInboundGateway();
 		in.setConnectionFactory(serverNio);
 		QueueChannel serverSideChannel = new QueueChannel();
 		in.setRequestChannel(serverSideChannel);
-		in.setBeanFactory(mock(BeanFactory.class));
+		in.setBeanFactory(TestUtils.createTestEvaluationContext());
 		in.afterPropertiesSet();
 		in.start();
 		TestingUtilities.waitListening(serverNio, null);
@@ -338,13 +338,14 @@ public class DeserializationTests {
 		clientNio.setSerializer(serializer);
 		clientNio.setDeserializer(deserializer);
 		clientNio.setSoTimeout(500);
+		clientNio.setBeanFactory(TestUtils.createTestEvaluationContext());
 		clientNio.afterPropertiesSet();
 		final TcpOutboundGateway out = new TcpOutboundGateway();
 		out.setConnectionFactory(clientNio);
 		QueueChannel outputChannel = new QueueChannel();
 		out.setOutputChannel(outputChannel);
 		out.setRemoteTimeout(60000);
-		out.setBeanFactory(mock(BeanFactory.class));
+		out.setBeanFactory(TestUtils.createTestEvaluationContext());
 		out.afterPropertiesSet();
 		out.start();
 		Runnable command = () -> {
@@ -377,12 +378,13 @@ public class DeserializationTests {
 		serverNio.setSerializer(serializer);
 		serverNio.setApplicationEventPublisher(event -> {
 		});
+		serverNio.setBeanFactory(TestUtils.createTestEvaluationContext());
 		serverNio.afterPropertiesSet();
 		TcpInboundGateway in = new TcpInboundGateway();
 		in.setConnectionFactory(serverNio);
 		QueueChannel serverSideChannel = new QueueChannel();
 		in.setRequestChannel(serverSideChannel);
-		in.setBeanFactory(mock(BeanFactory.class));
+		in.setBeanFactory(TestUtils.createTestEvaluationContext());
 		in.afterPropertiesSet();
 		in.start();
 		TestingUtilities.waitListening(serverNio, null);
@@ -398,7 +400,7 @@ public class DeserializationTests {
 		QueueChannel outputChannel = new QueueChannel();
 		out.setOutputChannel(outputChannel);
 		out.setRemoteTimeout(60000);
-		out.setBeanFactory(mock(BeanFactory.class));
+		out.setBeanFactory(TestUtils.createTestEvaluationContext());
 		out.afterPropertiesSet();
 		out.start();
 		Runnable command = () -> {

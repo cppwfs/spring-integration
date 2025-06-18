@@ -22,9 +22,9 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.integration.support.MessageBuilder;
+import org.springframework.integration.test.util.TestUtils;
 import org.springframework.integration.transformer.HeaderEnricher;
 import org.springframework.integration.transformer.support.StaticHeaderValueMessageProcessor;
 import org.springframework.messaging.Message;
@@ -33,7 +33,6 @@ import org.springframework.messaging.handler.annotation.Payload;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.Mockito.mock;
 
 /**
  * @author Mark Fisher
@@ -48,7 +47,7 @@ public class MethodInvokingHeaderEnricherTests {
 	public void emptyHeadersOnRequest() {
 		TestBean testBean = new TestBean();
 		MethodInvokingMessageProcessor processor = new MethodInvokingMessageProcessor(testBean, "process");
-		processor.setBeanFactory(mock(BeanFactory.class));
+		processor.setBeanFactory(TestUtils.createTestEvaluationContext());
 		HeaderEnricher enricher = new HeaderEnricher();
 		enricher.setMessageProcessor(processor);
 		enricher.setDefaultOverwrite(true);
@@ -63,7 +62,7 @@ public class MethodInvokingHeaderEnricherTests {
 	public void overwriteFalseByDefault() {
 		TestBean testBean = new TestBean();
 		MethodInvokingMessageProcessor processor = new MethodInvokingMessageProcessor(testBean, "process");
-		processor.setBeanFactory(mock(BeanFactory.class));
+		processor.setBeanFactory(TestUtils.createTestEvaluationContext());
 		HeaderEnricher enricher = new HeaderEnricher();
 		enricher.setMessageProcessor(processor);
 		Message<?> message = MessageBuilder.withPayload("test").setHeader("bar", "XYZ").build();
@@ -77,7 +76,7 @@ public class MethodInvokingHeaderEnricherTests {
 	public void overwriteFalseExplicit() {
 		TestBean testBean = new TestBean();
 		MethodInvokingMessageProcessor processor = new MethodInvokingMessageProcessor(testBean, "process");
-		processor.setBeanFactory(mock(BeanFactory.class));
+		processor.setBeanFactory(TestUtils.createTestEvaluationContext());
 		HeaderEnricher enricher = new HeaderEnricher();
 		enricher.setMessageProcessor(processor);
 		enricher.setDefaultOverwrite(false);
@@ -92,7 +91,7 @@ public class MethodInvokingHeaderEnricherTests {
 	public void overwriteTrue() {
 		TestBean testBean = new TestBean();
 		MethodInvokingMessageProcessor processor = new MethodInvokingMessageProcessor(testBean, "process");
-		processor.setBeanFactory(mock(BeanFactory.class));
+		processor.setBeanFactory(TestUtils.createTestEvaluationContext());
 		HeaderEnricher enricher = new HeaderEnricher();
 		enricher.setMessageProcessor(processor);
 		enricher.setDefaultOverwrite(true);
@@ -109,6 +108,7 @@ public class MethodInvokingHeaderEnricherTests {
 						new StaticHeaderValueMessageProcessor<>("foo")));
 
 		try {
+			enricher.setBeanFactory(TestUtils.createTestEvaluationContext());
 			enricher.afterPropertiesSet();
 			fail("BeanInitializationException expected");
 		}

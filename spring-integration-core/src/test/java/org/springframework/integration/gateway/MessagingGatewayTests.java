@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2023 the original author or authors.
+ * Copyright 2002-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import org.springframework.beans.factory.BeanFactory;
+import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.channel.PublishSubscribeChannel;
+import org.springframework.integration.context.IntegrationContextUtils;
 import org.springframework.integration.handler.ServiceActivatingHandler;
 import org.springframework.integration.test.util.TestUtils;
 import org.springframework.integration.test.util.TestUtils.TestApplicationContext;
@@ -44,7 +45,6 @@ import org.springframework.messaging.PollableChannel;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.mockito.Mockito.mock;
 
 /**
  * @author Iwein Fuld
@@ -244,6 +244,8 @@ public class MessagingGatewayTests {
 		});
 		PublishSubscribeChannel errorChannel = new PublishSubscribeChannel();
 		ServiceActivatingHandler handler = new ServiceActivatingHandler(new MyErrorService());
+		StandardEvaluationContext evaluationContext = new StandardEvaluationContext();
+		this.applicationContext.registerBean(IntegrationContextUtils.INTEGRATION_EVALUATION_CONTEXT_BEAN_NAME, evaluationContext);
 		handler.setBeanFactory(this.applicationContext);
 		handler.afterPropertiesSet();
 		errorChannel.subscribe(handler);
@@ -273,6 +275,8 @@ public class MessagingGatewayTests {
 		MyOneWayErrorService myOneWayErrorService = new MyOneWayErrorService();
 		ServiceActivatingHandler handler = new ServiceActivatingHandler(myOneWayErrorService);
 		handler.setBeanFactory(this.applicationContext);
+		StandardEvaluationContext evaluationContext = new StandardEvaluationContext();
+		this.applicationContext.registerBean(IntegrationContextUtils.INTEGRATION_EVALUATION_CONTEXT_BEAN_NAME, evaluationContext);
 		handler.afterPropertiesSet();
 		errorChannel.subscribe(handler);
 
@@ -283,7 +287,7 @@ public class MessagingGatewayTests {
 		this.messagingGateway.setRequestChannel(reqChannel);
 		this.messagingGateway.setErrorChannel(errorChannel);
 		this.messagingGateway.setReplyChannel(null);
-		this.messagingGateway.setBeanFactory(mock(BeanFactory.class));
+		this.messagingGateway.setBeanFactory(TestUtils.createTestEvaluationContext());
 		this.messagingGateway.afterPropertiesSet();
 		this.messagingGateway.start();
 

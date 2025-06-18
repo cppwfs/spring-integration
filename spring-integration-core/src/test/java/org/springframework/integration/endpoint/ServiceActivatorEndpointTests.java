@@ -32,7 +32,6 @@ import org.springframework.messaging.support.GenericMessage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
 
 /**
  * @author Mark Fisher
@@ -81,15 +80,14 @@ public class ServiceActivatorEndpointTests {
 
 	@Test
 	public void returnAddressHeaderWithChannelName() {
-		TestUtils.TestApplicationContext testApplicationContext = TestUtils.createTestApplicationContext();
-		testApplicationContext.refresh();
+
 		QueueChannel channel = new QueueChannel(1);
 		channel.setBeanName("testChannel");
 		TestChannelResolver channelResolver = new TestChannelResolver();
 		channelResolver.addChannel("testChannel", channel);
 		ServiceActivatingHandler endpoint = this.createEndpoint();
 		endpoint.setChannelResolver(channelResolver);
-		endpoint.setBeanFactory(testApplicationContext);
+		endpoint.setBeanFactory(TestUtils.createTestEvaluationContext());
 		endpoint.afterPropertiesSet();
 		Message<?> message = MessageBuilder.withPayload("foo")
 				.setReplyChannelName("testChannel").build();
@@ -97,13 +95,11 @@ public class ServiceActivatorEndpointTests {
 		Message<?> reply = channel.receive(0);
 		assertThat(reply).isNotNull();
 		assertThat(reply.getPayload()).isEqualTo("FOO");
-		testApplicationContext.close();
 	}
 
 	@Test
 	public void dynamicReplyChannel() throws Exception {
-		TestUtils.TestApplicationContext testApplicationContext = TestUtils.createTestApplicationContext();
-		testApplicationContext.refresh();
+
 		final QueueChannel replyChannel1 = new QueueChannel();
 		final QueueChannel replyChannel2 = new QueueChannel();
 		replyChannel2.setBeanName("replyChannel2");
@@ -118,7 +114,7 @@ public class ServiceActivatorEndpointTests {
 		TestChannelResolver channelResolver = new TestChannelResolver();
 		channelResolver.addChannel("replyChannel2", replyChannel2);
 		endpoint.setChannelResolver(channelResolver);
-		endpoint.setBeanFactory(testApplicationContext);
+		endpoint.setBeanFactory(TestUtils.createTestEvaluationContext());
 		endpoint.afterPropertiesSet();
 		Message<String> testMessage1 = MessageBuilder.withPayload("bar")
 				.setReplyChannel(replyChannel1).build();
@@ -136,7 +132,6 @@ public class ServiceActivatorEndpointTests {
 		reply2 = replyChannel2.receive(0);
 		assertThat(reply2).isNotNull();
 		assertThat(reply2.getPayload()).isEqualTo("foobar");
-		testApplicationContext.close();
 	}
 
 	@Test
@@ -163,7 +158,7 @@ public class ServiceActivatorEndpointTests {
 		QueueChannel channel = new QueueChannel(1);
 		ServiceActivatingHandler endpoint = new ServiceActivatingHandler(new TestNullReplyBean(), "handle");
 		endpoint.setOutputChannel(channel);
-		endpoint.setBeanFactory(mock(BeanFactory.class));
+		endpoint.setBeanFactory(TestUtils.createTestEvaluationContext());
 		endpoint.afterPropertiesSet();
 		Message<?> message = MessageBuilder.withPayload("foo").build();
 		endpoint.handleMessage(message);
@@ -176,7 +171,7 @@ public class ServiceActivatorEndpointTests {
 		ServiceActivatingHandler endpoint = new ServiceActivatingHandler(new TestNullReplyBean(), "handle");
 		endpoint.setRequiresReply(true);
 		endpoint.setOutputChannel(channel);
-		endpoint.setBeanFactory(mock(BeanFactory.class));
+		endpoint.setBeanFactory(TestUtils.createTestEvaluationContext());
 		endpoint.afterPropertiesSet();
 		Message<?> message = MessageBuilder.withPayload("foo").build();
 		assertThatThrownBy(() -> endpoint.handleMessage(message))
@@ -194,7 +189,7 @@ public class ServiceActivatorEndpointTests {
 						return message;
 					}
 				}, "handle");
-		endpoint.setBeanFactory(mock(BeanFactory.class));
+		endpoint.setBeanFactory(TestUtils.createTestEvaluationContext());
 		endpoint.afterPropertiesSet();
 
 		Message<String> message = MessageBuilder.withPayload("test")
@@ -216,7 +211,7 @@ public class ServiceActivatorEndpointTests {
 								.setCorrelationId("ABC-123").build();
 					}
 				}, "handle");
-		endpoint.setBeanFactory(mock(BeanFactory.class));
+		endpoint.setBeanFactory(TestUtils.createTestEvaluationContext());
 		endpoint.afterPropertiesSet();
 
 		Message<String> message = MessageBuilder.withPayload("test")
@@ -231,7 +226,7 @@ public class ServiceActivatorEndpointTests {
 	@Test
 	public void testBeanFactoryPopulation() {
 		ServiceActivatingHandler endpoint = this.createEndpoint();
-		BeanFactory mock = mock(BeanFactory.class);
+		BeanFactory mock = TestUtils.createTestEvaluationContext();
 		endpoint.setBeanFactory(mock);
 		endpoint.afterPropertiesSet();
 		Object beanFactory = TestUtils.getPropertyValue(endpoint, "processor.beanFactory");
@@ -241,7 +236,7 @@ public class ServiceActivatorEndpointTests {
 
 	private ServiceActivatingHandler createEndpoint() {
 		ServiceActivatingHandler handler = new ServiceActivatingHandler(new TestBean(), "handle");
-		handler.setBeanFactory(mock(BeanFactory.class));
+		handler.setBeanFactory(TestUtils.createTestEvaluationContext());
 		handler.afterPropertiesSet();
 		return handler;
 	}

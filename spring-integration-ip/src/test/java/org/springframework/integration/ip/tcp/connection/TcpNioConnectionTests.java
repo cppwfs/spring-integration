@@ -777,6 +777,7 @@ public class TcpNioConnectionTests {
 	@Test
 	public void testNoDelayOnClose() throws Exception {
 		TcpNioServerConnectionFactory cf = newTcpNioServerConnectionFactory();
+		cf.setBeanFactory(TestUtils.createTestEvaluationContext());
 		final CountDownLatch reading = new CountDownLatch(1);
 		final StopWatch watch = new StopWatch();
 		cf.setDeserializer(is -> {
@@ -833,6 +834,7 @@ public class TcpNioConnectionTests {
 				latch.countDown();
 				return false;
 			});
+			server.setBeanFactory(TestUtils.createTestEvaluationContext());
 			server.afterPropertiesSet();
 			server.start();
 			assertThat(serverReadyLatch.await(10, TimeUnit.SECONDS)).isTrue();

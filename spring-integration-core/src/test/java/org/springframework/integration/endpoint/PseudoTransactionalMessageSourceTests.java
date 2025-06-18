@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2024 the original author or authors.
+ * Copyright 2002-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -30,6 +29,7 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.integration.channel.QueueChannel;
 import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.core.MessageSource;
+import org.springframework.integration.test.util.TestUtils;
 import org.springframework.integration.transaction.DefaultTransactionSynchronizationFactory;
 import org.springframework.integration.transaction.ExpressionEvaluatingTransactionSynchronizationProcessor;
 import org.springframework.integration.transaction.IntegrationResourceHolder;
@@ -47,7 +47,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
-import static org.mockito.Mockito.mock;
 
 /**
  * @author Gary Russell
@@ -64,7 +63,7 @@ public class PseudoTransactionalMessageSourceTests {
 		SourcePollingChannelAdapter adapter = new SourcePollingChannelAdapter();
 		ExpressionEvaluatingTransactionSynchronizationProcessor syncProcessor =
 				new ExpressionEvaluatingTransactionSynchronizationProcessor();
-		syncProcessor.setBeanFactory(mock(BeanFactory.class));
+		syncProcessor.setBeanFactory(TestUtils.createTestEvaluationContext());
 		PollableChannel queueChannel = new QueueChannel();
 		syncProcessor.setBeforeCommitExpression(new SpelExpressionParser().parseExpression("#bix"));
 		syncProcessor.setBeforeCommitChannel(queueChannel);
@@ -160,7 +159,7 @@ public class PseudoTransactionalMessageSourceTests {
 		SourcePollingChannelAdapter adapter = new SourcePollingChannelAdapter();
 		ExpressionEvaluatingTransactionSynchronizationProcessor syncProcessor =
 				new ExpressionEvaluatingTransactionSynchronizationProcessor();
-		syncProcessor.setBeanFactory(mock(BeanFactory.class));
+		syncProcessor.setBeanFactory(TestUtils.createTestEvaluationContext());
 		PollableChannel queueChannel = new QueueChannel();
 		syncProcessor.setAfterRollbackChannel(queueChannel);
 		syncProcessor.setAfterRollbackExpression(new SpelExpressionParser().parseExpression("#baz"));
@@ -205,7 +204,7 @@ public class PseudoTransactionalMessageSourceTests {
 			SourcePollingChannelAdapter adapter = new SourcePollingChannelAdapter();
 			ExpressionEvaluatingTransactionSynchronizationProcessor syncProcessor =
 					new ExpressionEvaluatingTransactionSynchronizationProcessor();
-			syncProcessor.setBeanFactory(mock(BeanFactory.class));
+			syncProcessor.setBeanFactory(TestUtils.createTestEvaluationContext());
 			syncProcessor.setBeforeCommitExpression(new SpelExpressionParser().parseExpression("#bix"));
 			syncProcessor.setBeforeCommitChannel(queueChannel);
 			syncProcessor.setAfterCommitChannel(queueChannel);
@@ -252,7 +251,7 @@ public class PseudoTransactionalMessageSourceTests {
 				SourcePollingChannelAdapter adapter = new SourcePollingChannelAdapter();
 				ExpressionEvaluatingTransactionSynchronizationProcessor syncProcessor =
 						new ExpressionEvaluatingTransactionSynchronizationProcessor();
-				syncProcessor.setBeanFactory(mock(BeanFactory.class));
+				syncProcessor.setBeanFactory(TestUtils.createTestEvaluationContext());
 				syncProcessor.setAfterRollbackChannel(queueChannel);
 				syncProcessor.setAfterRollbackExpression(new SpelExpressionParser().parseExpression("#baz"));
 
@@ -295,7 +294,7 @@ public class PseudoTransactionalMessageSourceTests {
 			SourcePollingChannelAdapter adapter = new SourcePollingChannelAdapter();
 			ExpressionEvaluatingTransactionSynchronizationProcessor syncProcessor =
 					new ExpressionEvaluatingTransactionSynchronizationProcessor();
-			syncProcessor.setBeanFactory(mock(BeanFactory.class));
+			syncProcessor.setBeanFactory(TestUtils.createTestEvaluationContext());
 			syncProcessor.setAfterRollbackChannel(queueChannel);
 			syncProcessor.setAfterRollbackExpression(new SpelExpressionParser().parseExpression("#baz"));
 

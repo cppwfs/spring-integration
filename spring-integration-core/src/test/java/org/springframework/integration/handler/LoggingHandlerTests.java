@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2024 the original author or authors.
+ * Copyright 2002-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 
 import org.springframework.beans.DirectFieldAccessor;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.log.LogAccessor;
@@ -41,7 +40,6 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -101,7 +99,7 @@ public class LoggingHandlerTests {
 	public void testDontEvaluateIfNotEnabled() {
 		LoggingHandler loggingHandler = new LoggingHandler("INFO");
 		loggingHandler.setLoggerName("test.logging.handler");
-		loggingHandler.setBeanFactory(mock(BeanFactory.class));
+		loggingHandler.setBeanFactory(TestUtils.createTestEvaluationContext());
 		loggingHandler.afterPropertiesSet();
 
 		LogAccessor logAccessor = TestUtils.getPropertyValue(loggingHandler, "messageLogger", LogAccessor.class);
@@ -120,7 +118,7 @@ public class LoggingHandlerTests {
 	@SuppressWarnings("unchecked")
 	public void testChangeLevel() {
 		LoggingHandler loggingHandler = new LoggingHandler(Level.INFO);
-		loggingHandler.setBeanFactory(mock(BeanFactory.class));
+		loggingHandler.setBeanFactory(TestUtils.createTestEvaluationContext());
 		loggingHandler.afterPropertiesSet();
 
 		DirectFieldAccessor accessor = new DirectFieldAccessor(loggingHandler);

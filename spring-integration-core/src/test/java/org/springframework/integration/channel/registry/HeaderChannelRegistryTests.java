@@ -93,6 +93,7 @@ public class HeaderChannelRegistryTests {
 	public void testReplace() {
 		MessagingTemplate template = new MessagingTemplate();
 		template.setDefaultDestination(this.input);
+		template.setBeanFactory(TestUtils.createTestEvaluationContext());
 		Message<?> reply = template.sendAndReceive(new GenericMessage<>("foo"));
 		assertThat(reply).isNotNull();
 		assertThat(reply.getPayload()).isEqualTo("echo:foo");
@@ -107,6 +108,7 @@ public class HeaderChannelRegistryTests {
 	public void testReplaceTtl() {
 		MessagingTemplate template = new MessagingTemplate();
 		template.setDefaultDestination(this.inputTtl);
+		template.setBeanFactory(TestUtils.createTestEvaluationContext());
 		Message<?> reply = template.sendAndReceive(new GenericMessage<>("ttl"));
 		assertThat(reply).isNotNull();
 		assertThat(reply.getPayload()).isEqualTo("echo:ttl");
@@ -121,6 +123,7 @@ public class HeaderChannelRegistryTests {
 	public void testReplaceCustomTtl() {
 		MessagingTemplate template = new MessagingTemplate();
 		template.setDefaultDestination(this.inputCustomTtl);
+		template.setBeanFactory(TestUtils.createTestEvaluationContext());
 		Message<String> requestMessage = MessageBuilder.withPayload("ttl")
 				.setHeader("channelTTL", 180000)
 				.build();
@@ -165,6 +168,7 @@ public class HeaderChannelRegistryTests {
 	public void testReplaceError() {
 		MessagingTemplate template = new MessagingTemplate();
 		template.setDefaultDestination(this.inputPolled);
+		template.setBeanFactory(TestUtils.createTestEvaluationContext());
 		Message<?> reply = template.sendAndReceive(new GenericMessage<>("bar"));
 		assertThat(reply).isNotNull();
 		assertThat(reply instanceof ErrorMessage).isTrue();
@@ -207,7 +211,7 @@ public class HeaderChannelRegistryTests {
 	@Test
 	public void testBFCRWithRegistry() {
 		BeanFactoryChannelResolver resolver = new BeanFactoryChannelResolver();
-		BeanFactory beanFactory = mock(BeanFactory.class);
+		BeanFactory beanFactory = TestUtils.createTestEvaluationContext();
 		when(beanFactory.getBean(IntegrationContextUtils.INTEGRATION_HEADER_CHANNEL_REGISTRY_BEAN_NAME,
 				HeaderChannelRegistry.class))
 				.thenReturn(mock(HeaderChannelRegistry.class));
@@ -224,7 +228,7 @@ public class HeaderChannelRegistryTests {
 	@Test
 	public void testBFCRNoRegistry() {
 		BeanFactoryChannelResolver resolver = new BeanFactoryChannelResolver();
-		BeanFactory beanFactory = mock(BeanFactory.class);
+		BeanFactory beanFactory = TestUtils.createTestEvaluationContext();
 		doAnswer(invocation -> {
 			throw new NoSuchBeanDefinitionException("bar");
 		}).when(beanFactory).getBean("foo", MessageChannel.class);

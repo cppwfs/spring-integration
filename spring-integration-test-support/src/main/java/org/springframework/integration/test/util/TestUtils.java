@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2024 the original author or authors.
+ * Copyright 2002-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,9 @@ import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.springframework.beans.DirectFieldAccessor;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.SmartLifecycle;
+import org.springframework.context.expression.MapAccessor;
 import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.format.support.DefaultFormattingConversionService;
 import org.springframework.lang.Nullable;
 import org.springframework.messaging.Message;
@@ -50,6 +52,11 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.ErrorHandler;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Mark Fisher
@@ -375,6 +382,26 @@ public abstract class TestUtils {
 		});
 
 		ctx.updateLoggers();
+	}
+
+	/**
+	 * Creates a mocked {@link BeanFactory} instance configured to simulate the presence
+	 * of the {@code integrationEvaluationContext} bean.
+	 * <p>
+	 * The mocked bean factory is set up to:
+	 *
+	 * @return a mocked {@link BeanFactory} instance with evaluation context behavior.
+	 */
+	public static BeanFactory createTestEvaluationContext() {
+		final String integrationEvaluationContextBeanName = "integrationEvaluationContext";
+		BeanFactory beanFactory = mock(BeanFactory.class);
+		when(beanFactory.containsBean(eq(integrationEvaluationContextBeanName)))
+				.thenReturn(true);
+		StandardEvaluationContext evaluationContext = new StandardEvaluationContext();
+		evaluationContext.addPropertyAccessor(new MapAccessor());
+		when(beanFactory.getBean(eq(integrationEvaluationContextBeanName), any(Class.class)))
+				.thenReturn(evaluationContext);
+		return beanFactory;
 	}
 
 	public record LevelsContainer(Map<Class<?>, Level> classLevels, Map<String, Level> categoryLevels) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2024 the original author or authors.
+ * Copyright 2002-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import jakarta.jms.Session;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.DirectFieldAccessor;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.integration.channel.QueueChannel;
@@ -61,7 +60,7 @@ public class ChannelPublishingJmsMessageListenerTests {
 		listener.setRequestChannel(requestChannel);
 		listener.setMessageConverter(new TestMessageConverter());
 		jakarta.jms.Message jmsMessage = session.createTextMessage("test");
-		listener.setBeanFactory(mock(BeanFactory.class));
+		listener.setBeanFactory(TestUtils.createTestEvaluationContext());
 		listener.afterPropertiesSet();
 		assertThatExceptionOfType(InvalidDestinationException.class)
 				.isThrownBy(() -> listener.onMessage(jmsMessage, session));
@@ -77,7 +76,6 @@ public class ChannelPublishingJmsMessageListenerTests {
 		listener.setRequestChannel(requestChannel);
 		QueueChannel errorChannel = new QueueChannel();
 		listener.setErrorChannel(errorChannel);
-		listener.setBeanFactory(mock(BeanFactory.class));
 		listener.setMessageConverter(new TestMessageConverter() {
 
 			@Override
@@ -86,6 +84,7 @@ public class ChannelPublishingJmsMessageListenerTests {
 			}
 
 		});
+		listener.setBeanFactory(TestUtils.createTestEvaluationContext());
 		listener.afterPropertiesSet();
 		jakarta.jms.Message jmsMessage = session.createTextMessage("test");
 		listener.onMessage(jmsMessage, mock(Session.class));

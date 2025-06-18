@@ -31,7 +31,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.channel.QueueChannel;
 import org.springframework.integration.handler.AbstractMessageHandler;
@@ -51,7 +50,6 @@ import org.springframework.util.StopWatch;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.mockito.Mockito.mock;
 
 /**
  * @author Mark Fisher
@@ -73,7 +71,7 @@ public class AggregatorTests {
 	@BeforeEach
 	public void configureAggregator() {
 		this.aggregator = new AggregatingMessageHandler(new MultiplyingProcessor(), store);
-		this.aggregator.setBeanFactory(mock(BeanFactory.class));
+		this.aggregator.setBeanFactory(TestUtils.createTestEvaluationContext());
 		this.aggregator.setApplicationEventPublisher(event -> expiryEvents.add((MessageGroupExpiredEvent) event));
 		this.aggregator.setBeanName("testAggregator");
 		this.aggregator.afterPropertiesSet();

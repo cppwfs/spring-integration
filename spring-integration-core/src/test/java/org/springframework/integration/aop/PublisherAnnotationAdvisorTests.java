@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,10 @@ import org.junit.jupiter.api.Test;
 
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.context.support.StaticApplicationContext;
+import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.integration.annotation.Publisher;
 import org.springframework.integration.channel.QueueChannel;
+import org.springframework.integration.context.IntegrationContextUtils;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.handler.annotation.Payload;
 
@@ -49,6 +51,7 @@ public class PublisherAnnotationAdvisorTests {
 	public void setup() {
 		context.registerSingleton("testChannel", QueueChannel.class);
 		context.registerSingleton("testMetaChannel", QueueChannel.class);
+		context.registerSingleton(IntegrationContextUtils.INTEGRATION_EVALUATION_CONTEXT_BEAN_NAME, StandardEvaluationContext.class);
 	}
 
 	@AfterEach

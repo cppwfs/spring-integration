@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 the original author or authors.
+ * Copyright 2019-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import reactor.core.publisher.Mono;
 
 import org.springframework.integration.channel.QueueChannel;
 import org.springframework.integration.history.MessageHistory;
+import org.springframework.integration.test.util.TestUtils;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.GenericMessage;
 
@@ -50,6 +51,7 @@ class ReactiveMessageHandlerTests {
 	void messageHandledOnSubscribe() {
 		assertThat(handled.get()).isFalse();
 		TestReactiveMessageHandler handler = new TestReactiveMessageHandler();
+		handler.setBeanFactory(TestUtils.createTestEvaluationContext());
 		handler.afterPropertiesSet();
 		Message<?> message = new GenericMessage<>("");
 		handler.handleMessage(message).subscribe();
@@ -62,6 +64,7 @@ class ReactiveMessageHandlerTests {
 		TestReactiveMessageHandler handler = new TestReactiveMessageHandler();
 		handler.setShouldTrack(true);
 		handler.setComponentName("test-message-handler");
+		handler.setBeanFactory(TestUtils.createTestEvaluationContext());
 		handler.afterPropertiesSet();
 		Message<?> message = new GenericMessage<>("");
 		handler.handleMessage(message).subscribe();

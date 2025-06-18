@@ -147,6 +147,7 @@ public class ErrorMessageExceptionTypeRouterTests {
 		ErrorMessage message = new ErrorMessage(error);
 		ErrorMessageExceptionTypeRouter router = new ErrorMessageExceptionTypeRouter();
 		router.setApplicationContext(this.context);
+		router.setBeanFactory(TestUtils.createTestApplicationContext());
 		router.setDefaultOutputChannel(defaultChannel);
 		router.afterPropertiesSet();
 
@@ -167,6 +168,7 @@ public class ErrorMessageExceptionTypeRouterTests {
 		ErrorMessage message = new ErrorMessage(error);
 		ErrorMessageExceptionTypeRouter router = new ErrorMessageExceptionTypeRouter();
 		router.setApplicationContext(this.context);
+		router.setBeanFactory(TestUtils.createTestApplicationContext());
 		router.setChannelMapping(MessageDeliveryException.class.getName(), "messageDeliveryExceptionChannel");
 		router.setResolutionRequired(true);
 		router.setBeanName("fooRouter");
@@ -252,6 +254,7 @@ public class ErrorMessageExceptionTypeRouterTests {
 	public void testInvalidMapping() {
 		ErrorMessageExceptionTypeRouter router = new ErrorMessageExceptionTypeRouter();
 		router.setApplicationContext(this.context);
+		router.setBeanFactory(TestUtils.createTestEvaluationContext());
 		router.afterPropertiesSet();
 		try {
 			router.setChannelMapping("foo", "fooChannel");

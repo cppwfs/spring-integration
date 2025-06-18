@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2024 the original author or authors.
+ * Copyright 2014-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -455,6 +455,7 @@ public class EnableIntegrationTests {
 		assertThat(message.getHeaders().get("foo")).isEqualTo("FOO");
 
 		MessagingTemplate messagingTemplate = new MessagingTemplate(this.controlBusChannel);
+		messagingTemplate.setBeanFactory(TestUtils.createTestEvaluationContext());
 		assertThat(messagingTemplate.convertSendAndReceive("pausable.isRunning", Boolean.class)).isEqualTo(false);
 		this.controlBusChannel.send(new GenericMessage<>("pausable.start"));
 		assertThat(messagingTemplate.convertSendAndReceive("pausable.isRunning", Boolean.class)).isEqualTo(true);
