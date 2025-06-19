@@ -125,6 +125,10 @@ public abstract class TestUtils {
 	 * @return the {@link TestApplicationContext} instance
 	 */
 	public static TestApplicationContext createTestApplicationContext() {
+		return createTestApplicationContext(false);
+	}
+
+	public static TestApplicationContext createTestApplicationContext(boolean refresh) {
 		TestApplicationContext context = new TestApplicationContext();
 		ErrorHandler errorHandler = new MessagePublishingErrorHandler(context);
 		ThreadPoolTaskScheduler scheduler = createTaskScheduler(10); // NOSONAR
@@ -136,6 +140,12 @@ public abstract class TestUtils {
 					LOGGER.error(message);
 					return true;
 				}, context);
+		StandardEvaluationContext integrationEvaluationContext = new StandardEvaluationContext();
+		integrationEvaluationContext.addPropertyAccessor(new MapAccessor());
+		registerBean("integrationEvaluationContext", integrationEvaluationContext, context);
+		if (refresh) {
+			context.refresh();
+		}
 		return context;
 	}
 
@@ -391,7 +401,11 @@ public abstract class TestUtils {
 	 * The mocked bean factory is set up to:
 	 *
 	 * @return a mocked {@link BeanFactory} instance with evaluation context behavior.
+	 *
+	 * @Deprecated
+	 *  use createTestApplicationContext
 	 */
+	@Deprecated
 	public static BeanFactory createTestEvaluationContext() {
 		final String integrationEvaluationContextBeanName = "integrationEvaluationContext";
 		BeanFactory beanFactory = mock(BeanFactory.class);

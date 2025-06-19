@@ -28,6 +28,7 @@ import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -49,7 +50,6 @@ import org.springframework.integration.support.json.Jackson2JsonMessageParser;
 import org.springframework.integration.support.json.JsonInboundMessageMapper;
 import org.springframework.integration.support.json.JsonOutboundMessageMapper;
 import org.springframework.integration.test.util.OnlyOnceTrigger;
-import org.springframework.integration.test.util.TestUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlOutParameter;
 import org.springframework.jdbc.core.SqlParameter;
@@ -219,9 +219,9 @@ class JdbcTests {
 	public static class Config {
 
 		@Bean
-		public IntegrationFlow inboundFlow(DataSource h2DataSource) {
+		public IntegrationFlow inboundFlow(DataSource h2DataSource, BeanFactory beanFactory) {
 			var sqlParameterSourceFactory = new ExpressionEvaluatingSqlParameterSourceFactory();
-			sqlParameterSourceFactory.setBeanFactory(TestUtils.createTestEvaluationContext());
+			sqlParameterSourceFactory.setBeanFactory(beanFactory);
 			return IntegrationFlow.from(Jdbc.inboundAdapter(h2DataSource, "select * from inbound")
 									.maxRows(2)
 									.rowMapper((rs, rowNum) -> new Inbound(rs.getInt(1), rs.getInt(2)))
