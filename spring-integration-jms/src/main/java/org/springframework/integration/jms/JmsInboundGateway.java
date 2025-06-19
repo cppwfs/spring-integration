@@ -150,7 +150,7 @@ public class JmsInboundGateway extends MessagingGatewaySupport implements Orderl
 	@Override
 	protected void onInit() {
 		this.endpoint.setComponentName(getComponentName());
-		this.endpoint. afterPropertiesSet();
+		this.endpoint.afterPropertiesSet();
 	}
 
 	public ChannelPublishingJmsMessageListener getListener() {

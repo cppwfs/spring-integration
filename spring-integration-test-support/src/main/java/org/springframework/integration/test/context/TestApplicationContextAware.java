@@ -17,11 +17,17 @@
 package org.springframework.integration.test.context;
 
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 
 import org.springframework.integration.test.util.TestUtils;
 
 public interface TestApplicationContextAware {
-	TestUtils.TestApplicationContext CONTEXT = TestUtils.createTestApplicationContext(true);;
+	TestUtils.TestApplicationContext CONTEXT = TestUtils.createTestApplicationContext();
+
+	@BeforeAll
+	static void beforeAll() {
+		CONTEXT.refresh();
+	}
 
 	@AfterAll
 	static void tearDown() {
