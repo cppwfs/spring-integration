@@ -23,6 +23,8 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.integration.util.ClassUtils;
 import org.springframework.util.Assert;
 
@@ -35,9 +37,9 @@ public class CompositeCodec implements Codec {
 
 	private final Codec defaultCodec;
 
-	private final Map<Class<?>, Codec> delegates;
+	private final @Nullable Map<Class<?>, Codec> delegates;
 
-	public CompositeCodec(Map<Class<?>, Codec> delegates, Codec defaultCodec) {
+	public CompositeCodec(@Nullable Map<Class<?>, Codec> delegates, Codec defaultCodec) {
 		Assert.notNull(defaultCodec, "'defaultCodec' cannot be null");
 		this.defaultCodec = defaultCodec;
 		this.delegates = new HashMap<Class<?>, Codec>(delegates);
@@ -90,7 +92,7 @@ public class CompositeCodec implements Codec {
 		return decode(new ByteArrayInputStream(bytes), type);
 	}
 
-	private Codec findDelegate(Class<?> type) {
+	private @Nullable Codec findDelegate(Class<?> type) {
 		if (this.delegates == null) {
 			return null;
 		}
