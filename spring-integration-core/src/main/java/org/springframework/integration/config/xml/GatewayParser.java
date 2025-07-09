@@ -71,11 +71,12 @@ public class GatewayParser implements BeanDefinitionParser {
 
 	private static final String MAPPER_ATTR = "mapper";
 
+	@SuppressWarnings("NullAway")
 	@Override
-	public @Nullable BeanDefinition parse(final Element element, ParserContext parserContext) {
+	public BeanDefinition parse(final Element element, ParserContext parserContext) {
 		boolean isNested = parserContext.isNested();
 
-		final Map<String, @Nullable Object> gatewayAttributes = new HashMap<>();
+		final Map<String, Object> gatewayAttributes = new HashMap<>();
 		gatewayAttributes.put(AbstractBeanDefinitionParser.NAME_ATTRIBUTE,
 				element.getAttribute(AbstractBeanDefinitionParser.ID_ATTRIBUTE));
 		gatewayAttributes.put("defaultPayloadExpression", element.getAttribute("default-payload-expression"));

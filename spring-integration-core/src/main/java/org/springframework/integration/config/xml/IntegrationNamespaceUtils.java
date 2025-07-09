@@ -298,8 +298,7 @@ public abstract class IntegrationNamespaceUtils {
 			Element beanElement = childElements.get(0);
 			BeanDefinitionParserDelegate delegate = parserContext.getDelegate();
 			BeanDefinitionHolder bdHolder = delegate.parseBeanDefinitionElement(beanElement);
-			Assert.state(bdHolder != null, "bdHolder must not be null");
-			bdHolder = delegate.decorateBeanDefinitionIfRequired(beanElement, bdHolder);
+			bdHolder = delegate.decorateBeanDefinitionIfRequired(beanElement, Objects.requireNonNull(bdHolder));
 			BeanDefinition inDef = bdHolder.getBeanDefinition();
 			innerComponentDefinition = new BeanComponentDefinition(inDef, bdHolder.getBeanName());
 		}

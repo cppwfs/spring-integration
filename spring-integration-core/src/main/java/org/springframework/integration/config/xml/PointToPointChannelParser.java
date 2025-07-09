@@ -16,7 +16,8 @@
 
 package org.springframework.integration.config.xml;
 
-import org.jspecify.annotations.Nullable;
+import java.util.Objects;
+
 import org.w3c.dom.Element;
 
 import org.springframework.beans.factory.config.TypedStringValue;
@@ -45,7 +46,7 @@ import org.springframework.util.xml.DomUtils;
 public class PointToPointChannelParser extends AbstractChannelParser {
 
 	@Override
-	protected @Nullable BeanDefinitionBuilder buildBeanDefinition(Element element, ParserContext parserContext) {
+	protected BeanDefinitionBuilder buildBeanDefinition(Element element, ParserContext parserContext) {
 		BeanDefinitionBuilder builder = null;
 		Element queueElement;
 		String fixedSubscriberChannel = element.getAttribute("fixed-subscriber");
@@ -70,7 +71,6 @@ public class PointToPointChannelParser extends AbstractChannelParser {
 		if (queueElement != null && dispatcherElement != null) {
 			parserContext.getReaderContext().error(
 					"The 'dispatcher' sub-element and any queue sub-element are mutually exclusive.", element);
-			return null;
 		}
 
 		if (queueElement != null) {
@@ -79,7 +79,7 @@ public class PointToPointChannelParser extends AbstractChannelParser {
 						"The 'fixed-subscriber' attribute is not allowed when a <queue/> child element is present.",
 						element);
 			}
-			return builder;
+			return Objects.requireNonNull(builder);
 		}
 
 		if (dispatcherElement == null) {
