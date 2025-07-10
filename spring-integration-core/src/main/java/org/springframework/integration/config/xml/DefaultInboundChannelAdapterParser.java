@@ -49,7 +49,7 @@ import org.springframework.util.xml.DomUtils;
 public class DefaultInboundChannelAdapterParser extends AbstractPollingInboundChannelAdapterParser {
 
 	@Override
-	protected @Nullable BeanMetadataElement parseSource(Element element, ParserContext parserContext) {
+	protected BeanMetadataElement parseSource(Element element, ParserContext parserContext) {
 		Object source = parserContext.extractSource(element);
 		BeanMetadataElement result = null;
 		BeanComponentDefinition innerBeanDef =
@@ -90,7 +90,6 @@ public class DefaultInboundChannelAdapterParser extends AbstractPollingInboundCh
 						"Neither 'ref' and 'method' nor 'expression' are permitted when an inner script element is "
 								+ "configured on element "
 								+ IntegrationNamespaceUtils.createElementDescription(element) + ".", source);
-				return null;
 			}
 			BeanDefinition scriptBeanDefinition = parserContext.getDelegate().parseCustomElement(Objects.requireNonNull(scriptElement));
 			BeanDefinitionBuilder sourceBuilder = BeanDefinitionBuilder.genericBeanDefinition(
@@ -104,12 +103,10 @@ public class DefaultInboundChannelAdapterParser extends AbstractPollingInboundCh
 				parserContext.getReaderContext().error(
 						"The 'ref' and 'method' attributes can't be used with 'expression' attribute or inner "
 								+ "<expression>.", element);
-				return null;
 			}
 			if (hasExpression & hasExpressionElement) {
 				parserContext.getReaderContext().error(
 						"Exactly one of the 'expression' attribute or inner <expression> is required.", element);
-				return null;
 			}
 			result = parseExpression(expressionString, expressionElement, element, parserContext);
 		}
@@ -122,7 +119,7 @@ public class DefaultInboundChannelAdapterParser extends AbstractPollingInboundCh
 				result = sourceValue;
 			}
 		}
-		return result;
+		return Objects.requireNonNull(result);
 	}
 
 	private BeanMetadataElement parseMethodInvokingSource(BeanMetadataElement targetObject, String methodName,
