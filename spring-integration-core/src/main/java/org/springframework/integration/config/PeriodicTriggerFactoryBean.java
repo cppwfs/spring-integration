@@ -50,11 +50,11 @@ public class PeriodicTriggerFactoryBean implements FactoryBean<PeriodicTrigger> 
 	@Nullable
 	private TimeUnit timeUnit;
 
-	public void setFixedDelayValue(String fixedDelayValue) {
+	public void setFixedDelayValue(@Nullable String fixedDelayValue) {
 		this.fixedDelayValue = fixedDelayValue;
 	}
 
-	public void setFixedRateValue(String fixedRateValue) {
+	public void setFixedRateValue(@Nullable String fixedRateValue) {
 		this.fixedRateValue = fixedRateValue;
 	}
 
@@ -94,7 +94,8 @@ public class PeriodicTriggerFactoryBean implements FactoryBean<PeriodicTrigger> 
 		return PeriodicTrigger.class;
 	}
 
-	private static Duration toDuration(String value, TimeUnit timeUnit) {
+	private static Duration toDuration(@Nullable String value, TimeUnit timeUnit) {
+		Assert.state(value != null, "'value' must not be null");
 		if (isDurationString(value)) {
 			return Duration.parse(value);
 		}
