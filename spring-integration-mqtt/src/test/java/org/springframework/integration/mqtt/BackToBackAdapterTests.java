@@ -73,6 +73,8 @@ import static org.mockito.Mockito.mock;
 @DirtiesContext
 public class BackToBackAdapterTests implements MosquittoContainerTest {
 
+	private static final long DISCONNECT_COMPLETION_TIMEOUT = 1L;
+
 	@TempDir
 	static File folder;
 
@@ -111,6 +113,7 @@ public class BackToBackAdapterTests implements MosquittoContainerTest {
 		inbound.setOutputChannel(outputChannel);
 		inbound.setTaskScheduler(taskScheduler);
 		inbound.setBeanFactory(mock(BeanFactory.class));
+		inbound.setDisconnectCompletionTimeout(DISCONNECT_COMPLETION_TIMEOUT);
 		inbound.afterPropertiesSet();
 		inbound.start();
 		adapter.handleMessage(new GenericMessage<>("foo"));
@@ -149,6 +152,7 @@ public class BackToBackAdapterTests implements MosquittoContainerTest {
 		QueueChannel outputChannel = new QueueChannel();
 		inbound.setOutputChannel(outputChannel);
 		inbound.setTaskScheduler(taskScheduler);
+		inbound.setDisconnectCompletionTimeout(DISCONNECT_COMPLETION_TIMEOUT);
 		inbound.setBeanFactory(mock(BeanFactory.class));
 		inbound.setConverter(converter);
 		inbound.afterPropertiesSet();
@@ -180,6 +184,7 @@ public class BackToBackAdapterTests implements MosquittoContainerTest {
 		QueueChannel outputChannel = new QueueChannel();
 		inbound.setOutputChannel(outputChannel);
 		inbound.setTaskScheduler(taskScheduler);
+		inbound.setDisconnectCompletionTimeout(DISCONNECT_COMPLETION_TIMEOUT);
 		inbound.setBeanFactory(mock(BeanFactory.class));
 		inbound.afterPropertiesSet();
 		inbound.start();
@@ -228,6 +233,7 @@ public class BackToBackAdapterTests implements MosquittoContainerTest {
 		QueueChannel outputChannel = new QueueChannel();
 		inbound.setOutputChannel(outputChannel);
 		inbound.setTaskScheduler(taskScheduler);
+		inbound.setDisconnectCompletionTimeout(DISCONNECT_COMPLETION_TIMEOUT);
 		inbound.setBeanFactory(mock(BeanFactory.class));
 		inbound.afterPropertiesSet();
 		inbound.start();
@@ -263,6 +269,7 @@ public class BackToBackAdapterTests implements MosquittoContainerTest {
 		QueueChannel outputChannel = new QueueChannel();
 		inbound.setOutputChannel(outputChannel);
 		inbound.setTaskScheduler(taskScheduler);
+		inbound.setDisconnectCompletionTimeout(DISCONNECT_COMPLETION_TIMEOUT);
 		inbound.setBeanFactory(mock(BeanFactory.class));
 		inbound.afterPropertiesSet();
 		inbound.start();
@@ -301,6 +308,7 @@ public class BackToBackAdapterTests implements MosquittoContainerTest {
 		QueueChannel outputChannel = new QueueChannel();
 		inbound.setOutputChannel(outputChannel);
 		inbound.setTaskScheduler(taskScheduler);
+		inbound.setDisconnectCompletionTimeout(DISCONNECT_COMPLETION_TIMEOUT);
 		inbound.setBeanFactory(mock(BeanFactory.class));
 		inbound.afterPropertiesSet();
 		inbound.start();
