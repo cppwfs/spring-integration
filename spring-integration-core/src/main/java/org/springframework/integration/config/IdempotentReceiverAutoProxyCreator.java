@@ -53,7 +53,7 @@ class IdempotentReceiverAutoProxyCreator extends AbstractAutoProxyCreator {
 	@SuppressWarnings("NullAway.Init")
 	private volatile List<Map<String, String>> idempotentEndpointsMapping;
 
-	private @Nullable Map<String, List<String>> idempotentEndpoints; // double check locking requires volatile
+	private volatile @Nullable Map<String, List<String>> idempotentEndpoints; // double check locking requires volatile
 
 	private final Lock lock = new ReentrantLock();
 

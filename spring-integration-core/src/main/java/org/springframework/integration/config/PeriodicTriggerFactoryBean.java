@@ -17,6 +17,7 @@
 package org.springframework.integration.config;
 
 import java.time.Duration;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.jspecify.annotations.Nullable;
@@ -79,7 +80,8 @@ public class PeriodicTriggerFactoryBean implements FactoryBean<PeriodicTrigger> 
 			timeUnitToUse = TimeUnit.MILLISECONDS;
 		}
 
-		Duration duration = toDuration(hasFixedDelay ? this.fixedDelayValue : this.fixedRateValue, timeUnitToUse);
+		String value = hasFixedDelay ? this.fixedDelayValue : this.fixedRateValue;
+		Duration duration = toDuration(Objects.requireNonNull(value), timeUnitToUse);
 
 		PeriodicTrigger periodicTrigger = new PeriodicTrigger(duration);
 		periodicTrigger.setFixedRate(hasFixedRate);
@@ -94,8 +96,7 @@ public class PeriodicTriggerFactoryBean implements FactoryBean<PeriodicTrigger> 
 		return PeriodicTrigger.class;
 	}
 
-	private static Duration toDuration(@Nullable String value, TimeUnit timeUnit) {
-		Assert.state(value != null, "'value' must not be null");
+	private static Duration toDuration(String value, TimeUnit timeUnit) {
 		if (isDurationString(value)) {
 			return Duration.parse(value);
 		}
