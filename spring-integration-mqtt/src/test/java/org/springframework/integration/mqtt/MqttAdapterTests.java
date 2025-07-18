@@ -100,7 +100,6 @@ import static org.mockito.Mockito.when;
  * @author Gary Russell
  * @author Artem Bilan
  * @author Artem Vozhdayenko
- * @author Glenn Renfro
  *
  * @since 4.0
  *
@@ -520,7 +519,7 @@ public class MqttAdapterTests implements TestApplicationContextAware {
 
 		new DirectFieldAccessor(adapter).setPropertyValue("running", Boolean.TRUE);
 		adapter.stop();
-		verify(client).disconnectForcibly(30_000, 5_000L);
+		verify(client).disconnectForcibly(30_000L, 5_000L);
 	}
 
 	@Test
