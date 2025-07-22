@@ -51,6 +51,7 @@ import org.springframework.util.Assert;
  * @author Gary Russell
  * @author Oleg Zhurakousky
  * @author Artem Bilan
+ * @author Glenn Renfro
  *
  * @since 1.0.2
  */
@@ -58,10 +59,12 @@ public class UnicastingDispatcher extends AbstractDispatcher {
 
 	private final MessageHandler dispatchHandler = this::doDispatch;
 
+	@Nullable
 	private final Executor executor;
 
 	private Predicate<Exception> failoverStrategy = (exception) -> true;
 
+	@Nullable
 	private LoadBalancingStrategy loadBalancingStrategy;
 
 	private MessageHandlingTaskDecorator messageHandlingTaskDecorator = task -> task;
