@@ -12,12 +12,13 @@ This transformer provides  support for the CloudEvents specification v1.0 with c
 === Overview
 
 The CloudEvent transformer (`ToCloudEventTransformer`) extends Spring Integration's `AbstractTransformer` to convert messages to CloudEvent format.
-To do this, it uses a `FormatStrategy` that allows users to transform the message to the desired "CloudEvent" format (CloudEvent, JSON, XML, AVRO, etc).  It defaults to `CloudEventFormatStrategy`.
+To do this, it uses `FormatStrategy`'s that allows users to serialize the payload with the CloudEvent for the following types.(JSON, XML, AVRO, etc).
+You can also specify your own `Converter` or the `CloudEventMessageConverter` provided by the CloudEvents Java SDK client.
 
 [[cloudevent-transformer-conversion-types]]
 === Format Strategy
 
-The `ToCloudEventTransformer` accepts classes that implement the `FormatStrategy`  to serialize CloudEvent data to formats other than the default `CloudEventMessageFormatStrategy`.
+The `ToCloudEventTransformer` accepts classes that implement the `MessageConverter`  to serialize CloudEvent data to formats other than the default `CloudEventMessageConverter`.
 
 [[configure-transformer]]
 === Configuring Transformer
@@ -28,10 +29,8 @@ The `ToCloudEventTransformer` class provides configurations for CloudEvent metad
 
 [source,java]
 ----
-ToCloudEventTransformer cloudEventTransformer = new ToCloudEventTransformer();
-cloudEventTransformer.setId("event-123");                                    // The CloudEvent ID. Default is "".
-cloudEventTransformer.setSource(URI.create("https://example.com/source"));   // The event source. Default is "".
-cloudEventTransformer.setType("com.example.OrderCreated");                   // The event type. The Default is "".
+ToCloudEventTransformer cloudEventTransformer = new ToCloudEventTransformer(new JsonFormatStrategy(), "id_", "source_*", "type_", patterns);
+cloudEventTransformer.setDefaultId("id-123");                               // Set a default id if one is not found in message.
 cloudEventTransformer.setDataContentType("application/json");                // The data content type. Default is null.
 cloudEventTransformer.setDataSchema(URI.create("https://example.com/schema")); // The data schema. Default is null.
 cloudEventTransformer.setSubject("order-processing");                        // The event subject. Default is null.
@@ -44,17 +43,17 @@ cloudEventTransformer.setTime(OffsetDateTime.now());                         // 
 |===
 | Property | Default Value | Description
 
-| `id`
-| `""`
-| Empty string - should be set to unique identifier
+| `defaultId`
+| null
+| Establishes a default id for the cloud event if none is found in the message.  If not set and no id is found in the message a `IllegalStateException` is thrown.
 
-| `source`
-| `URI.create("")`
-| Empty URI - should be set to event source
+| `defaultSource`
+| null
+| Establishes a default source for the cloud event if none is found in the message.  If not set and no source is found in the message a `IllegalStateException` is thrown.
 
 | `type`
-| `""`
-| Empty string - should be set to event type
+| null
+| Establishes a default type for the cloud event if none is found in the message.  If not set and no type is found in the message a `IllegalStateException` is thrown.
 
 | `dataContentType`
 | `null`
@@ -71,10 +70,6 @@ cloudEventTransformer.setTime(OffsetDateTime.now());                         // 
 | `time`
 | `null`
 | Optional event timestamp
-
-| `cePrefix`
-| `CloudEventsHeaders.CE_PREFIX`
-| Default is CloudEventsHeaders.CE_PREFIX.
 |===
 
 [[cloudevent-extensions-pattern-matching]]
@@ -91,9 +86,7 @@ String[] patterns = {"key-*", "external-*", "!internal-*"};
 
 // Extension patterns are processed during transformation
 ToCloudEventTransformer transformer = new ToCloudEventTransformer(
-    new CloudEventMessageFormatStrategy(),
-    patterns
-);
+    new XmlFormatStrategy(), "id_", "source_*", "type_", patterns);
 ----
 
 [[cloudevent-extensions-pattern-syntax]]
@@ -133,7 +126,7 @@ The transformer follows the process below:
 
 1. **Extension Extraction**: Extract CloudEvent extensions from message headers using configured patterns
 2. **CloudEvent Building**: Build a CloudEvent with configured properties and message payload
-3. **Format Conversion**: Apply the specified `FormatStrategy` to format the output
+3. **Format Conversion**: Apply the specified `MessageConverter` to format the output
 
 ==== Payload Handling
 
@@ -164,15 +157,14 @@ Message<String> inputMessage = MessageBuilder
     .withPayload("Hello CloudEvents")
     .setHeader("trace-id", "abc123")
     .setHeader("user-session", "session456")
+    .setHeader("id_test", "123")
+    .setHeader("source_test", "test-source")
+    .setHeader("type_test", "test-type")
     .build();
 
 // Transformer with extension patterns
 ToCloudEventTransformer transformer = new ToCloudEventTransformer(
-    new CloudEventMessageFormatStrategy(), "trace-*");
-// Configure properties
-transformer.setId("event-123");
-transformer.setSource(URI.create("https://example.com"));
-transformer.setType("com.example.MessageProcessed");
+    new CloudEventMessageConverter(), "id_*", "source_*", "type_*", "trace-*");
 
 // Transform to CloudEvent
 Message<?> cloudEventMessage = transformer.transform(inputMessage);

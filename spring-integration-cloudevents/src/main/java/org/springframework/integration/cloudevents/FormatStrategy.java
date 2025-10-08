@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-package org.springframework.integration.cloudevents.transformer.strategies;
+package org.springframework.integration.cloudevents;
 
 import io.cloudevents.CloudEvent;
-
-import org.springframework.messaging.Message;
-import org.springframework.messaging.MessageHeaders;
 
 /**
  * Strategy interface for converting CloudEvents to different message formats.
@@ -34,11 +31,10 @@ import org.springframework.messaging.MessageHeaders;
 public interface FormatStrategy {
 
 	/**
-	 * Converts the {@link CloudEvent} to a message object.
+	 * Converts the payload {@link CloudEvent} to a message object.
 	 *
-	 * @param cloudEvent the CloudEvent to be converted to a {@link Message}
-	 * @param messageHeaders the headers associated with the {@link Message}
-	 * @return the converted {@link Message}
+	 * @param cloudEvent the CloudEvent to be converted to a byte array.
+	 * @return the converted byte[]
 	 */
-	Message<?> toIntegrationMessage(CloudEvent cloudEvent, MessageHeaders messageHeaders);
+	byte[] toByteArray(CloudEvent cloudEvent);
 }

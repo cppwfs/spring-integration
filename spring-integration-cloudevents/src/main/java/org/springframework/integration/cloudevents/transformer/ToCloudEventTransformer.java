@@ -17,11 +17,14 @@
 package org.springframework.integration.cloudevents.transformer;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 
 import io.cloudevents.CloudEvent;
 import io.cloudevents.CloudEventExtension;
@@ -29,12 +32,14 @@ import io.cloudevents.CloudEventExtensions;
 import io.cloudevents.core.builder.CloudEventBuilder;
 import org.jspecify.annotations.Nullable;
 
-import org.springframework.integration.cloudevents.transformer.strategies.CloudEventMessageFormatStrategy;
-import org.springframework.integration.cloudevents.transformer.strategies.FormatStrategy;
+import org.springframework.integration.cloudevents.FormatStrategy;
 import org.springframework.integration.support.utils.PatternMatchUtils;
 import org.springframework.integration.transformer.AbstractTransformer;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
+import org.springframework.messaging.converter.MessageConverter;
+import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.util.Assert;
 
 /**
  * A Spring Integration transformer that converts messages to CloudEvent format.
@@ -47,13 +52,17 @@ import org.springframework.messaging.MessageHeaders;
  */
 public class ToCloudEventTransformer extends AbstractTransformer {
 
-	public static String CE_PREFIX = "ce-";
+	private final String idPattern;
 
-	private String id = "";
+	private final String sourcePattern;
 
-	private URI source = URI.create("");
+	private final String typePattern;
 
-	private String type = "";
+	private @Nullable String defaultId;
+
+	private @Nullable URI defaultSource;
+
+	private @Nullable String defaultType;
 
 	private @Nullable String dataContentType;
 
@@ -65,29 +74,48 @@ public class ToCloudEventTransformer extends AbstractTransformer {
 
 	private final String @Nullable [] cloudEventExtensionPatterns;
 
-	private final FormatStrategy formatStrategy;
+	private @Nullable FormatStrategy formatStrategy;
+
+	private @Nullable MessageConverter messageConverter;
 
 	/**
 	 * ToCloudEventTransformer Constructor
 	 *
 	 * @param formatStrategy The strategy that determines how the CloudEvent will be rendered
+	 * @param idPattern a pattern for matching the pattern for the cloud event id to a header in the message.
+	 * @param sourcePattern a pattern for matching the pattern for the cloud event source to a header in the message.
+	 * @param typePattern a pattern for matching the pattern for the cloud event type to a header in the message.
 	 * @param cloudEventExtensionPatterns an array of patterns for matching headers that should become CloudEvent extensions,
 	 * supports wildcards and negation with '!' prefix   If a header matches one of the '!' it is excluded from
 	 * cloud event headers and the message headers. Null to disable extension mapping.
 	 */
-	public ToCloudEventTransformer(FormatStrategy formatStrategy,
-			String @Nullable ... cloudEventExtensionPatterns) {
+	public ToCloudEventTransformer(FormatStrategy formatStrategy, String idPattern, String sourcePattern,
+			String typePattern, String @Nullable ... cloudEventExtensionPatterns) {
 		this.cloudEventExtensionPatterns = cloudEventExtensionPatterns;
 		this.formatStrategy = formatStrategy;
+		this.idPattern = idPattern;
+		this.sourcePattern = sourcePattern;
+		this.typePattern = typePattern;
 	}
 
 	/**
-	 * Constructs a {@link ToCloudEventTransformer} that defaults to the {@link CloudEventMessageFormatStrategy}. This
-	 * strategy will use the default CE_PREFIX and will not contain and cloudEventExtensionPatterns.
+	 * ToCloudEventTransformer Constructor
 	 *
+	 * @param messageConverter The strategy that determines how the CloudEvent message will be converted to the proper format
+	 * @param idPattern a pattern for matching the pattern for the cloud event id to a header in the message.
+	 * @param sourcePattern a pattern for matching the pattern for the cloud event source to a header in the message.
+	 * @param typePattern a pattern for matching the pattern for the cloud event type to a header in the message.
+	 * @param cloudEventExtensionPatterns an array of patterns for matching headers that should become CloudEvent extensions,
+	 * supports wildcards and negation with '!' prefix   If a header matches one of the '!' it is excluded from
+	 * cloud event headers and the message headers. Null to disable extension mapping.
 	 */
-	public ToCloudEventTransformer() {
-		this(new CloudEventMessageFormatStrategy(CE_PREFIX), (String[]) null);
+	public ToCloudEventTransformer(MessageConverter messageConverter, String idPattern, String sourcePattern,
+			String typePattern, String @Nullable ... cloudEventExtensionPatterns) {
+		this.cloudEventExtensionPatterns = cloudEventExtensionPatterns;
+		this.messageConverter = messageConverter;
+		this.idPattern = idPattern;
+		this.sourcePattern = sourcePattern;
+		this.typePattern = typePattern;
 	}
 
 	/**
@@ -107,12 +135,13 @@ public class ToCloudEventTransformer extends AbstractTransformer {
 	 */
 	@Override
 	protected Object doTransform(Message<?> message) {
+		Object result = null;
 		ToCloudEventTransformerExtensions extensions =
 				new ToCloudEventTransformerExtensions(message.getHeaders(), this.cloudEventExtensionPatterns);
 		CloudEvent cloudEvent = CloudEventBuilder.v1()
-				.withId(this.id)
-				.withSource(this.source)
-				.withType(this.type)
+				.withId(getAttribute(message.getHeaders(), this.idPattern, this.defaultId, getStringValueFunction()))
+				.withSource(getAttribute(message.getHeaders(), this.sourcePattern, this.defaultSource, getSourceValueFunction()))
+				.withType(getAttribute(message.getHeaders(), this.typePattern, this.defaultType, getStringValueFunction()))
 				.withTime(this.time)
 				.withDataContentType(this.dataContentType)
 				.withDataSchema(this.dataSchema)
@@ -120,7 +149,69 @@ public class ToCloudEventTransformer extends AbstractTransformer {
 				.withData(getPayloadAsBytes(message.getPayload()))
 				.withExtension(extensions)
 				.build();
-				return this.formatStrategy.toIntegrationMessage(cloudEvent, message.getHeaders());
+		if (this.messageConverter != null) {
+			result = this.messageConverter.toMessage(cloudEvent, filterHeaders(message.getHeaders()));
+			Assert.state(result != null, "MessageConverter was unable to convert Message " +
+					"to CloudEvent");
+		}
+		else if (this.formatStrategy != null) {
+			result = MessageBuilder.withPayload(this.formatStrategy.toByteArray(cloudEvent))
+					.copyHeaders(filterHeaders(message.getHeaders()))
+					.build();
+
+		}
+		Assert.state(result != null, "Transformer was unable to convert Message to CloudEvent");
+		return result;
+	}
+
+	private Function<Object, String> getStringValueFunction() {
+		return id -> {
+			if ((id instanceof String idString)) {
+				return idString;
+			}
+			throw new IllegalStateException(
+					"Field in CloudEvent must be a String but header contains: " + id.getClass().getName());
+		};
+	}
+
+	private Function<Object, URI> getSourceValueFunction() {
+		return  object -> {
+			if (object instanceof String stringUri) {
+				return URI.create(stringUri);
+			}
+			else if (object instanceof URI uri) {
+				return uri;
+			}
+			else {
+				throw new IllegalStateException(
+						"CloudEvent 'source' must be String or URI but header contains: " +
+								object.getClass().getName());
+			}
+		};
+	}
+
+	private  <T> @Nullable T getAttribute(MessageHeaders headers, String pattern,
+			@Nullable T defaultAttribute, Function<Object, T> converter) {
+		Set<Object> attributes = getAttributesForPattern(headers, pattern);
+		Assert.state(!attributes.isEmpty() || defaultAttribute != null, "No attribute for " +
+				pattern + " found");
+		if (!attributes.isEmpty()) {
+			Object headerValue = attributes.iterator().next();
+			return converter.apply(headerValue);
+		}
+		return defaultAttribute;
+	}
+
+	private static Set<Object> getAttributesForPattern(MessageHeaders headers, String pattern) {
+		Set<Object> attributes = new HashSet<>();
+		headers.keySet().forEach(key -> {
+			Boolean result = ToCloudEventTransformerExtensions.categorizeHeader(key, pattern);
+			if (result != null) {
+				attributes.add(Objects.requireNonNull(headers.get(key)));
+			}
+		});
+		Assert.state(attributes.size() < 2, "Multiple headers match the '" + pattern + "'");
+		return attributes;
 	}
 
 	private static byte[] getPayloadAsBytes(Object payload) {
@@ -128,10 +219,10 @@ public class ToCloudEventTransformer extends AbstractTransformer {
 			return bytePayload;
 		}
 		else if (payload instanceof String stringPayload) {
-			return stringPayload.getBytes();
+			return stringPayload.getBytes(StandardCharsets.UTF_8);
 		}
 		else {
-			return payload.toString().getBytes();
+			return payload.toString().getBytes(StandardCharsets.UTF_8);
 		}
 	}
 
@@ -140,28 +231,32 @@ public class ToCloudEventTransformer extends AbstractTransformer {
 		return "ce:to-cloudevents-transformer";
 	}
 
-	public String getId() {
-		return this.id;
+	public @Nullable String getDefaultId() {
+		return this.defaultId;
 	}
 
-	public void setId(String id) {
-		this.id = id;
+	public void setDefaultId(String defaultId) {
+		this.defaultId = defaultId;
 	}
 
-	public URI getSource() {
-		return this.source;
+	public @Nullable URI getDefaultSource() {
+		return this.defaultSource;
 	}
 
-	public void setSource(URI source) {
-		this.source = source;
+	public void setDefaultSource(URI defaultSource) {
+		this.defaultSource = defaultSource;
 	}
 
-	public String getType() {
-		return this.type;
+	public @Nullable String getDefaultType() {
+		return this.defaultType;
 	}
 
-	public void setType(String type) {
-		this.type = type;
+	public void setDefaultType(String defaultType) {
+		this.defaultType = defaultType;
+	}
+
+	public String @Nullable [] getCloudEventExtensionPatterns() {
+		return this.cloudEventExtensionPatterns;
 	}
 
 	public @Nullable String getDataContentType() {
@@ -196,12 +291,29 @@ public class ToCloudEventTransformer extends AbstractTransformer {
 		this.time = time;
 	}
 
+	/**
+	 * This method creates a {@link MessageHeaders} that were not placed in the CloudEvent and were not excluded via the
+	 * categorization mechanism.
+	 * @param headers The {@link MessageHeaders} to be filtered.
+	 * @return {@link MessageHeaders} that have been filtered.
+	 */
+	private MessageHeaders filterHeaders(MessageHeaders headers) {
+
+		Map<String, Object> filteredHeaders = new HashMap<>();
+		headers.keySet().forEach(key -> {
+			if (ToCloudEventTransformerExtensions.categorizeHeader(key, this.cloudEventExtensionPatterns) == null) {
+				filteredHeaders.put(key, Objects.requireNonNull(headers.get(key)));
+			}
+		});
+		return new MessageHeaders(filteredHeaders);
+	}
+
 	private static class ToCloudEventTransformerExtensions implements CloudEventExtension {
 
 		/**
 		 * Map storing the CloudEvent extensions extracted from message headers.
 		 */
-		private final Map<String, String> cloudEventExtensions;
+		private final Map<String, Object> cloudEventExtensions;
 
 		/**
 		 * Construct CloudEvent extensions by filtering message headers against patterns.
@@ -211,14 +323,14 @@ public class ToCloudEventTransformer extends AbstractTransformer {
 		 * will be included as CloudEvent extensions.
 		 *
 		 * @param headers the Spring Integration message headers to process
-		 * @param patterns comma-delimited patterns for header matching, may be null to include no extensions
+		 * @param patterns an array patterns for header matching, may be null to include no extensions
 		 */
 		ToCloudEventTransformerExtensions(MessageHeaders headers, String @Nullable ... patterns) {
 			this.cloudEventExtensions = new HashMap<>();
 			headers.keySet().forEach(key -> {
 				Boolean result = categorizeHeader(key, patterns);
 				if (result != null && result) {
-					this.cloudEventExtensions.put(key, (String) Objects.requireNonNull(headers.get(key)));
+					this.cloudEventExtensions.put(key, Objects.requireNonNull(headers.get(key)));
 				}
 			});
 		}
@@ -227,7 +339,10 @@ public class ToCloudEventTransformer extends AbstractTransformer {
 		public void readFrom(CloudEventExtensions extensions) {
 			extensions.getExtensionNames()
 					.forEach(key -> {
-						this.cloudEventExtensions.put(key, this.cloudEventExtensions.get(key));
+						Object value = extensions.getExtension(key);
+						if (value != null) {
+							this.cloudEventExtensions.put(key, value);
+						}
 					});
 		}
 
@@ -242,10 +357,10 @@ public class ToCloudEventTransformer extends AbstractTransformer {
 		}
 
 		/**
-		 * Categorizes a header value by matching it against a comma-delimited pattern string.
+		 * Categorizes a header value by matching it against an array of pattern strings.
 		 * <p>
 		 * This method takes a header value and matches it against one or more patterns
-		 * specified in a comma-delimited string. It uses Spring's smart pattern matching
+		 * specified in an array strings. It uses Spring's smart pattern matching
 		 * which supports wildcards and other pattern matching features.
 		 *
 		 * @param value the header value to match against the patterns
@@ -254,7 +369,7 @@ public class ToCloudEventTransformer extends AbstractTransformer {
 		 *         {@code Boolean.FALSE} if the value starts with the pattern token that is prefixed with a `!`,
 		 *         or {@code null} if the header starts with a value that is not enumerated in the pattern
 		 */
-		public static @Nullable Boolean categorizeHeader(String value, String @Nullable ... patterns) {
+		static @Nullable Boolean categorizeHeader(String value, String @Nullable ... patterns) {
 			Boolean result = null;
 			if (patterns != null) {
 				for (String patternItem : patterns) {
