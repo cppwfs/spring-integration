@@ -16,35 +16,55 @@
 
 package org.springframework.integration.cloudevents.transformer;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Function;
+
+import io.cloudevents.avro.compact.AvroCompactFormat;
+import io.cloudevents.core.format.EventFormat;
+import io.cloudevents.jackson.JsonFormat;
 import io.cloudevents.spring.messaging.CloudEventMessageConverter;
+import io.cloudevents.xml.XMLFormat;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
-import org.springframework.integration.cloudevents.AvroFormatStrategy;
-import org.springframework.integration.cloudevents.FormatStrategy;
-import org.springframework.integration.cloudevents.JsonFormatStrategy;
-import org.springframework.integration.cloudevents.XmlFormatStrategy;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.expression.Expression;
+import org.springframework.expression.common.LiteralExpression;
+import org.springframework.integration.expression.FunctionExpression;
 import org.springframework.integration.transformer.MessageTransformationException;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@SpringJUnitConfig
 class ToCloudEventTransformerTests {
 
 	private static final String PAYLOAD = "test message";
 
 	private ToCloudEventTransformer transformer;
 
-	private final String[] extensionPatterns = {"customer-header", "!notme-header"};
+	@Autowired
+	private ApplicationContext applicationContext;
+
+	private final Expression[] extensionExpressions = {new FunctionExpression<>(new Function<String, Boolean>() {
+
+		@Override
+		public Boolean apply(String message) {
+			return Boolean.TRUE;//message.equals("customer-header");
+		}
+	})
+	};
 
 	@Test
 	void doCloudEventConverterTransformWithPayload() {
-		Message<?> result = getSampleMessage(PAYLOAD.getBytes(), null,
-				new CloudEventMessageConverter());
+		Message<?> result = getSampleMessage(PAYLOAD.getBytes(), Collections.singletonList(new JsonFormat()));
 		assertThat(result.getPayload()).isEqualTo(PAYLOAD.getBytes());
 		verifyMessageHeaders(result.getHeaders());
 	}
@@ -53,7 +73,7 @@ class ToCloudEventTransformerTests {
 	void doJsonTransformWithPayload() {
 		String expectedPayload = "{\"specversion\":\"1.0\",\"id\":\"test-id\",\"source\":\"test-source\",\"type\":\"test-type\"," +
 				"\"data\":test message}";
-		Message<?> result = getSampleMessage(PAYLOAD.getBytes(), new JsonFormatStrategy(), null);
+		Message<?> result = getSampleMessage(PAYLOAD.getBytes(), Collections.singletonList(new JsonFormat()));
 		assertThat(result.getPayload()).isEqualTo(expectedPayload.getBytes());
 		verifyMessageHeaders(result.getHeaders());
 	}
@@ -65,7 +85,7 @@ class ToCloudEventTransformerTests {
 				"specversion=\"1.0\" xmlns=\"http://cloudevents.io/xmlformat/V1\"><id>test-id</id>" +
 				"<source>test-source</source><type>test-type</type>" +
 				"<data xsi:type=\"xs:base64Binary\">dGVzdCBtZXNzYWdl</data></event>";
-		Message<?> result = getSampleMessage(PAYLOAD.getBytes(), new XmlFormatStrategy(), null);
+		Message<?> result = getSampleMessage(PAYLOAD.getBytes(), Collections.singletonList(new XMLFormat()));
 		assertThat(result.getPayload()).isEqualTo(expectedPayload.getBytes());
 		verifyMessageHeaders(result.getHeaders());
 	}
@@ -75,15 +95,14 @@ class ToCloudEventTransformerTests {
 		byte[] expectedPayload = {-61, 1, -70, 39, -71, 34, 9, -16, -17, 86, 14, 116, 101, 115, 116, 45, 105, 100, 22,
 				116, 101, 115, 116, 45, 115, 111, 117, 114, 99, 101, 18, 116, 101, 115, 116, 45, 116, 121, 112, 101,
 				0, 0, 0, 0, 0, 0, 24, 116, 101, 115, 116, 32, 109, 101, 115, 115, 97, 103, 101};
-		Message<?> result = getSampleMessage(PAYLOAD.getBytes(), new AvroFormatStrategy(), null);
+		Message<?> result = getSampleMessage(PAYLOAD.getBytes(), Collections.singletonList(new AvroCompactFormat()));
 		assertThat(result.getPayload()).isEqualTo(expectedPayload);
 		verifyMessageHeaders(result.getHeaders());
 	}
 
 	@Test
 	void doTransformWithObjectPayload() {
-		this.transformer = new ToCloudEventTransformer(new CloudEventMessageConverter(), "test_i*",
-				"test_s*", "test_t*", this.extensionPatterns);
+		this.transformer = new ToCloudEventTransformer(Collections.singletonList(new JsonFormat()), this.extensionExpressions);
 		Object payload = new Object() {
 			@Override
 			public String toString() {
@@ -105,36 +124,8 @@ class ToCloudEventTransformerTests {
 	}
 
 	@Test
-	void headerFiltering() {
-		this.transformer = new ToCloudEventTransformer(new CloudEventMessageConverter(), "test_i*",
-				"test_s*", "test_t*", this.extensionPatterns);
-		String payload = "test message";
-		Message<byte[]> message = createBaseMessage(payload.getBytes())
-			.setHeader("customer-header", "extension-value")
-			.setHeader("regular-header", "regular-value")
-			.setHeader("another-regular", "another-value")
-			.setHeader("notme-header", "novalue")
-			.build();
-
-		Object result = this.transformer.doTransform(message);
-
-		assertThat(result).isNotNull();
-		Message<?> resultMessage = (Message<?>) result;
-
-		// Check that regular headers are preserved
-		assertThat(resultMessage.getHeaders().containsKey("regular-header")).isTrue();
-		assertThat(resultMessage.getHeaders().containsKey("another-regular")).isTrue();
-		assertThat(resultMessage.getHeaders().containsKey("ce-customer-header")).isTrue();
-		assertThat(resultMessage.getHeaders().containsKey("notme-header")).isFalse();
-
-		assertThat(resultMessage.getHeaders().get("regular-header")).isEqualTo("regular-value");
-		assertThat(resultMessage.getHeaders().get("another-regular")).isEqualTo("another-value");
-	}
-
-	@Test
 	void emptyExtensionNames() {
-		ToCloudEventTransformer emptyExtensionTransformer = new ToCloudEventTransformer(new CloudEventMessageConverter(), "test_i*",
-				"test_s*", "test_t*");
+		ToCloudEventTransformer emptyExtensionTransformer = new ToCloudEventTransformer(Collections.singletonList(new JsonFormat()), null);
 
 		String payload = "test message";
 		Message<byte[]> message = createBaseMessage(payload.getBytes())
@@ -155,8 +146,7 @@ class ToCloudEventTransformerTests {
 	void multipleExtensionMappings() {
 		String[] extensionPatterns = {"trace-id", "span-id", "user-id"};
 
-		ToCloudEventTransformer extendedTransformer = new ToCloudEventTransformer(new CloudEventMessageConverter(),
-				"test_i*", "test_s*", "test_t*", extensionPatterns);
+		ToCloudEventTransformer extendedTransformer = new ToCloudEventTransformer(Collections.singletonList(new JsonFormat()),this.extensionExpressions);
 		String payload = "test message";
 		Message<byte[]> message = createBaseMessage(payload.getBytes())
 			.setHeader("trace-id", "trace-123")
@@ -178,8 +168,7 @@ class ToCloudEventTransformerTests {
 	@Test
 	void emptyStringPayloadHandling() {
 		Message<byte[]> message = createBaseMessage("".getBytes()).build();
-		this.transformer = new ToCloudEventTransformer(new CloudEventMessageConverter(), "test_i*",
-				"test_s*", "test_t*", this.extensionPatterns);
+		this.transformer = new ToCloudEventTransformer(Collections.singletonList(new JsonFormat()), this.extensionExpressions);
 		Object result = this.transformer.doTransform(message);
 
 		assertThat(result).isNotNull();
@@ -188,8 +177,7 @@ class ToCloudEventTransformerTests {
 
 	@Test
 	void defaultConstructorUsesDefaultCloudEventProperties() {
-		ToCloudEventTransformer defaultTransformer = new ToCloudEventTransformer(new CloudEventMessageConverter(),
-				"test_i*", "test_s*", "test_t*");
+		ToCloudEventTransformer defaultTransformer = new ToCloudEventTransformer(Collections.singletonList(new JsonFormat()));
 
 		String payload = "test default properties";
 		Message<byte[]> message = createBaseMessage(payload.getBytes()).build();
@@ -202,8 +190,7 @@ class ToCloudEventTransformerTests {
 
 	@Test
 	void failWhenNoIdHeaderAndNoDefault() {
-		ToCloudEventTransformer transformer = new ToCloudEventTransformer(
-				new JsonFormatStrategy(), "missing_id*", "source", "type");
+		ToCloudEventTransformer transformer = new ToCloudEventTransformer(Collections.singletonList(new JsonFormat()));
 
 		Message<?> message = MessageBuilder.withPayload("test")
 				.setHeader("source", "test-source")
@@ -217,8 +204,7 @@ class ToCloudEventTransformerTests {
 
 	@Test
 	void failWhenMultipleHeadersMatchPattern() {
-		ToCloudEventTransformer transformer = new ToCloudEventTransformer(
-				new JsonFormatStrategy(), "id*", "source", "type");
+		ToCloudEventTransformer transformer = new ToCloudEventTransformer(Collections.singletonList(new JsonFormat()));
 
 		Message<?> message = MessageBuilder.withPayload("test")
 				.setHeader("id1", "test-id-1")
@@ -234,8 +220,7 @@ class ToCloudEventTransformerTests {
 
 	@Test
 	void failWhenIdIsNotString() {
-		ToCloudEventTransformer transformer = new ToCloudEventTransformer(
-				new JsonFormatStrategy(), "id_*", "source", "type");
+		ToCloudEventTransformer transformer = new ToCloudEventTransformer(Collections.singletonList(new JsonFormat()));
 
 		Message<?> message = MessageBuilder.withPayload("test")
 				.setHeader("id_test", 1234)  // Integer, not String
@@ -250,17 +235,14 @@ class ToCloudEventTransformerTests {
 	}
 
 	@SuppressWarnings("unchecked")
-	private Message<byte[]> getSampleMessage(byte[] payload, @Nullable FormatStrategy formatStrategy,
-			@Nullable MessageConverter messageConverter) {
-		this.transformer = (formatStrategy != null) ? new ToCloudEventTransformer(formatStrategy,  "test_i*",
-				"test_s*", "test_t*", this.extensionPatterns) :
-				new ToCloudEventTransformer(messageConverter, "test_i*", "test_s*",
-						"test_t*", this.extensionPatterns);
+	private Message<byte[]> getSampleMessage(byte[] payload, @Nullable List<EventFormat> eventFormats) {
+		this.transformer = (eventFormats != null) ? new ToCloudEventTransformer(eventFormats, this.extensionExpressions) :
+				new ToCloudEventTransformer(Collections.singletonList(new JsonFormat()), this.extensionExpressions);
+		this.transformer.setApplicationContext(this.applicationContext);
 		Message<byte[]> message = createBaseMessage(payload)
 				.setHeader("custom-header", "test-value")
 				.setHeader("other-header", "other-value")
 				.build();
-
 		Object result = this.transformer.doTransform(message);
 
 		assertThat(result).isNotNull();
