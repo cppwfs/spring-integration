@@ -73,7 +73,7 @@ import org.springframework.util.Assert;
  *
  */
 @ImportRuntimeHints(IntegrationGraphRuntimeHints.class)
-public class IntegrationGraphServer implements ApplicationContextAware, ApplicationListener<ContextRefreshedEvent> {
+public class IntegrationGraphServer implements ContextAware, ApplicationListener<ContextRefreshedEvent> {
 
 	private static final float GRAPH_VERSION = 1.2f;
 

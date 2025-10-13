@@ -30,9 +30,16 @@ import io.cloudevents.CloudEvent;
 import io.cloudevents.CloudEventExtension;
 import io.cloudevents.CloudEventExtensions;
 import io.cloudevents.core.builder.CloudEventBuilder;
+import io.cloudevents.core.format.EventFormat;
 import org.jspecify.annotations.Nullable;
 
+import org.springframework.expression.EvaluationContext;
+import org.springframework.expression.Expression;
+import org.springframework.expression.common.LiteralExpression;
+import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.integration.cloudevents.FormatStrategy;
+import org.springframework.integration.expression.ExpressionUtils;
+import org.springframework.integration.expression.FunctionExpression;
 import org.springframework.integration.support.utils.PatternMatchUtils;
 import org.springframework.integration.transformer.AbstractTransformer;
 import org.springframework.messaging.Message;
@@ -52,31 +59,24 @@ import org.springframework.util.Assert;
  */
 public class ToCloudEventTransformer extends AbstractTransformer {
 
-	private final String idPattern;
+	private Expression idExpression = new FunctionExpression<Message<?>>(o -> o.getHeaders().getId().toString());
 
-	private final String sourcePattern;
+	@SuppressWarnings("NullAway.Init")
+	private Expression sourceExpression;
 
-	private final String typePattern;
-
-	private @Nullable String defaultId;
-
-	private @Nullable URI defaultSource;
-
-	private @Nullable String defaultType;
-
-	private @Nullable String dataContentType;
+	private Expression typeExpression = new LiteralExpression("spring.message");
 
 	private @Nullable URI dataSchema;
 
 	private @Nullable String subject;
-
-	private @Nullable OffsetDateTime time;
 
 	private final String @Nullable [] cloudEventExtensionPatterns;
 
 	private @Nullable FormatStrategy formatStrategy;
 
 	private @Nullable MessageConverter messageConverter;
+
+	private EvaluationContext evaluationContext;
 
 	/**
 	 * ToCloudEventTransformer Constructor
@@ -89,7 +89,7 @@ public class ToCloudEventTransformer extends AbstractTransformer {
 	 * supports wildcards and negation with '!' prefix   If a header matches one of the '!' it is excluded from
 	 * cloud event headers and the message headers. Null to disable extension mapping.
 	 */
-	public ToCloudEventTransformer(FormatStrategy formatStrategy, String idPattern, String sourcePattern,
+	public ToCloudEventTransformer(EventFormat formatStrategy, String idPattern, String sourcePattern,
 			String typePattern, String @Nullable ... cloudEventExtensionPatterns) {
 		this.cloudEventExtensionPatterns = cloudEventExtensionPatterns;
 		this.formatStrategy = formatStrategy;
@@ -118,6 +118,22 @@ public class ToCloudEventTransformer extends AbstractTransformer {
 		this.typePattern = typePattern;
 	}
 
+	public void setIdExpression(Expression idExpression) {
+		this.idExpression = idExpression;
+	}
+
+	@Override
+	protected void onInit() {
+		super.onInit();
+		this.evaluationContext = ExpressionUtils.createStandardEvaluationContext(getBeanFactory());
+		if (this.sourceExpression == null) {
+			String appName = this.getApplicationContext().getEnvironment().getProperty("spring.application.name");
+			appName = appName == null ? "unknown" : appName;
+			this.sourceExpression = new LiteralExpression("/spring/" + appName + "." + getBeanName());
+		}
+
+	}
+
 	/**
 	 * Transforms the input message into a CloudEvent message.
 	 * <p>
@@ -135,18 +151,19 @@ public class ToCloudEventTransformer extends AbstractTransformer {
 	 */
 	@Override
 	protected Object doTransform(Message<?> message) {
+		Assert.isInstanceOf(byte[].class, message.getPayload());
 		Object result = null;
 		ToCloudEventTransformerExtensions extensions =
 				new ToCloudEventTransformerExtensions(message.getHeaders(), this.cloudEventExtensionPatterns);
 		CloudEvent cloudEvent = CloudEventBuilder.v1()
-				.withId(getAttribute(message.getHeaders(), this.idPattern, this.defaultId, getStringValueFunction()))
-				.withSource(getAttribute(message.getHeaders(), this.sourcePattern, this.defaultSource, getSourceValueFunction()))
-				.withType(getAttribute(message.getHeaders(), this.typePattern, this.defaultType, getStringValueFunction()))
-				.withTime(this.time)
-				.withDataContentType(this.dataContentType)
+				.withId(this.idExpression.getValue(this.evaluationContext, message, String.class))
+				.withSource(this.sourceExpression.getValue(this.evaluationContext, message, URI.class))
+				.withType(this.typeExpression.getValue(this.evaluationContext, message, String.class))
+				.withTime(OffsetDateTime.now())
+				.withDataContentType(message.getHeaders().get(MessageHeaders.CONTENT_TYPE, String.class))
 				.withDataSchema(this.dataSchema)
 				.withSubject(this.subject)
-				.withData(getPayloadAsBytes(message.getPayload()))
+				.withData((byte[])message.getPayload())
 				.withExtension(extensions)
 				.build();
 		if (this.messageConverter != null) {
@@ -214,81 +231,17 @@ public class ToCloudEventTransformer extends AbstractTransformer {
 		return attributes;
 	}
 
-	private static byte[] getPayloadAsBytes(Object payload) {
-		if (payload instanceof byte[] bytePayload) {
-			return bytePayload;
-		}
-		else if (payload instanceof String stringPayload) {
-			return stringPayload.getBytes(StandardCharsets.UTF_8);
-		}
-		else {
-			return payload.toString().getBytes(StandardCharsets.UTF_8);
-		}
-	}
-
 	@Override
 	public String getComponentType() {
 		return "ce:to-cloudevents-transformer";
-	}
-
-	public @Nullable String getDefaultId() {
-		return this.defaultId;
-	}
-
-	public void setDefaultId(String defaultId) {
-		this.defaultId = defaultId;
-	}
-
-	public @Nullable URI getDefaultSource() {
-		return this.defaultSource;
-	}
-
-	public void setDefaultSource(URI defaultSource) {
-		this.defaultSource = defaultSource;
-	}
-
-	public @Nullable String getDefaultType() {
-		return this.defaultType;
-	}
-
-	public void setDefaultType(String defaultType) {
-		this.defaultType = defaultType;
-	}
-
-	public String @Nullable [] getCloudEventExtensionPatterns() {
-		return this.cloudEventExtensionPatterns;
-	}
-
-	public @Nullable String getDataContentType() {
-		return this.dataContentType;
-	}
-
-	public void setDataContentType(@Nullable String dataContentType) {
-		this.dataContentType = dataContentType;
-	}
-
-	public @Nullable URI getDataSchema() {
-		return this.dataSchema;
 	}
 
 	public void setDataSchema(@Nullable URI dataSchema) {
 		this.dataSchema = dataSchema;
 	}
 
-	public @Nullable String getSubject() {
-		return this.subject;
-	}
-
 	public void setSubject(@Nullable String subject) {
 		this.subject = subject;
-	}
-
-	public @Nullable OffsetDateTime getTime() {
-		return this.time;
-	}
-
-	public void setTime(@Nullable OffsetDateTime time) {
-		this.time = time;
 	}
 
 	/**
