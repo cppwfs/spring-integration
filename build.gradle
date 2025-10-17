@@ -514,10 +514,21 @@ project('spring-integration-core') {
 
     dokka {
         dokkaPublications.html {
-            outputDirectory.set(file('build/kdoc'))
+            outputDirectory.set(file('../build/kdoc'))
         }
         dokkaSourceSets.configureEach {
             sourceRoots.setFrom(file('src/main/kotlin'))
+            classpath.from(sourceSets['main'].runtimeClasspath)
+            externalDocumentationLinks.register("spring-integration-api") {
+                url.set(uri("https://docs.spring.io/spring-integration/docs/$version/api/"))
+                packageListUrl.set(file('build/docs/javadoc/element-list').toURI())
+            }
+            externalDocumentationLinks.register("reactor-core") {
+                url.set(uri('https://projectreactor.io/docs/core/release/api/'))
+            }
+            externalDocumentationLinks.register("reactive-streams") {
+                url.set(uri('https://www.reactive-streams.org/reactive-streams-1.0.3-javadoc/'))
+            }
         }
     }
 
@@ -1151,7 +1162,7 @@ tasks.register('docsZip', Zip) {
         into 'api'
     }
 
-    from(file('spring-integration-core/build/kdoc')) {
+    from(file('build/kdoc')) {
         into 'kdoc-api'
     }
 }
