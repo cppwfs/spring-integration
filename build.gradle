@@ -1098,17 +1098,6 @@ tasks.register('api') {
     dependsOn javadoc
 }
 
-dokka {
-    moduleName.set('spring-integration')
-    dokkaPublications.html {
-        outputDirectory.set(file('build/kdoc'))
-    }
-}
-
-tasks.named('dokkaGeneratePublicationHtml') {
-    dependsOn 'api'
-}
-
 apply from: "${rootDir}/gradle/docs.gradle"
 
 tasks.register('schemaZip', Zip) {
@@ -1147,7 +1136,6 @@ tasks.register('schemaZip', Zip) {
 }
 
 tasks.register('docsZip', Zip) {
-    dependsOn 'dokkaGeneratePublicationHtml'
     dependsOn ':spring-integration-core:dokkaGenerate'
     group = 'Distribution'
     archiveClassifier = 'docs'
