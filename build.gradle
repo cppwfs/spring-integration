@@ -115,6 +115,12 @@ ext {
     ztZipVersion = '1.17'
 
     javaProjects = subprojects - project(':spring-integration-bom')
+
+    // Modules that have (or will have) Kotlin sources to document
+    dokkaProjects = [
+        'spring-integration-core',
+        'spring-integration-jms'
+    ]
 }
 
 allprojects {
@@ -410,6 +416,31 @@ configure(javaProjects) { subproject ->
     }
 }
 
+// Configure Dokka for modules with Kotlin sources
+configure(subprojects.findAll { dokkaProjects.contains(it.name) }) { subproject ->
+    apply plugin: 'org.jetbrains.dokka'
+
+    dokka {
+        dokkaPublications.html {
+            outputDirectory.set(file("${rootProject.buildDir}/kdoc"))
+        }
+        dokkaSourceSets.configureEach {
+            sourceRoots.setFrom(file('src/main/kotlin'))
+            classpath.from(sourceSets['main'].runtimeClasspath)
+            externalDocumentationLinks.register("spring-integration-api") {
+                url.set(uri("https://docs.spring.io/spring-integration/docs/$version/api/"))
+                packageListUrl.set(file("${rootProject.buildDir}/docs/javadoc/element-list").toURI())
+            }
+            externalDocumentationLinks.register("reactor-core") {
+                url.set(uri('https://projectreactor.io/docs/core/release/api/'))
+            }
+            externalDocumentationLinks.register("reactive-streams") {
+                url.set(uri('https://www.reactive-streams.org/reactive-streams-1.0.3-javadoc/'))
+            }
+        }
+    }
+}
+
 project('spring-integration-test-support') {
     description = 'Spring Integration Test Support - **No SI Dependencies Allowed**'
     dependencies {
@@ -469,7 +500,6 @@ project('spring-integration-cassandra') {
 project('spring-integration-core') {
     description = 'Spring Integration Core'
 
-    apply plugin: 'org.jetbrains.dokka'
     apply plugin: 'com.google.protobuf'
 
     dependencies {
@@ -509,26 +539,6 @@ project('spring-integration-core') {
             exclude group: 'io.opentelemetry'
             exclude group: 'com.wavefront'
             exclude group: 'io.micrometer', module: 'micrometer-tracing-bridge-otel'
-        }
-    }
-
-    dokka {
-        dokkaPublications.html {
-            outputDirectory.set(file('../build/kdoc'))
-        }
-        dokkaSourceSets.configureEach {
-            sourceRoots.setFrom(file('src/main/kotlin'))
-            classpath.from(sourceSets['main'].runtimeClasspath)
-            externalDocumentationLinks.register("spring-integration-api") {
-                url.set(uri("https://docs.spring.io/spring-integration/docs/$version/api/"))
-                packageListUrl.set(file('build/docs/javadoc/element-list').toURI())
-            }
-            externalDocumentationLinks.register("reactor-core") {
-                url.set(uri('https://projectreactor.io/docs/core/release/api/'))
-            }
-            externalDocumentationLinks.register("reactive-streams") {
-                url.set(uri('https://www.reactive-streams.org/reactive-streams-1.0.3-javadoc/'))
-            }
         }
     }
 
@@ -1136,7 +1146,7 @@ tasks.register('schemaZip', Zip) {
 }
 
 tasks.register('docsZip', Zip) {
-    dependsOn ':spring-integration-core:dokkaGenerate'
+    dependsOn dokkaProjects.collect { ":${it}:dokkaGenerate" }
     group = 'Distribution'
     archiveClassifier = 'docs'
     description = "Builds -${archiveClassifier} archive containing api and reference " +
