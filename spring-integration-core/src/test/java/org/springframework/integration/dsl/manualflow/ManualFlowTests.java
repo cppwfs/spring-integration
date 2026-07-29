@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
+import org.aopalliance.intercept.MethodInterceptor;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
@@ -273,6 +274,36 @@ public class ManualFlowTests {
 		Object registeredBean = this.beanFactory.getBean("testProxiedComponent");
 		assertThat(AopUtils.isAopProxy(registeredBean)).isTrue();
 		assertThat(registeredBean).isNotSameAs(proxiedComponent);
+
+		flowRegistration.destroy();
+	}
+
+	@Test
+	void inlineHandlerPostProcessorReplacementIsUsedByEndpoint() {
+		ProxiedMessageHandler proxiedMessageHandler = new ProxiedMessageHandler();
+
+		IntegrationFlow flow =
+				f -> f.handle(proxiedMessageHandler);
+
+		IntegrationFlowRegistration flowRegistration =
+				this.integrationFlowContext.registration(flow)
+						.id("inlineHandlerProxyFlow")
+						.register();
+
+		String[] handlerBeanNames = this.beanFactory.getBeanNamesForType(ProxiedMessageHandler.class);
+		assertThat(handlerBeanNames).hasSize(1);
+
+		Object registeredHandler = this.beanFactory.getBean(handlerBeanNames[0]);
+		assertThat(AopUtils.isAopProxy(registeredHandler)).isTrue();
+		assertThat(registeredHandler).isNotSameAs(proxiedMessageHandler);
+
+		MessagingTemplate messagingTemplate = flowRegistration.getMessagingTemplate();
+		messagingTemplate.convertAndSend("test");
+
+		assertThat(proxiedMessageHandler.invokedThroughProxy)
+				.as("MessageHandler actually wired into the endpoint must be the proxy" +
+						" registered in the bean factory, not the raw pre-proxy instance")
+				.isTrue();
 
 		flowRegistration.destroy();
 	}
@@ -583,9 +614,17 @@ public class ManualFlowTests {
 
 				@Override
 				public Object postProcessAfterInitialization(Object bean, String beanName) {
-					if (bean instanceof ProxiedComponent) {
+					if (bean instanceof ProxiedComponent || bean instanceof ProxiedMessageHandler) {
 						ProxyFactory proxyFactory = new ProxyFactory(bean);
 						proxyFactory.setProxyTargetClass(true);
+						if (bean instanceof ProxiedMessageHandler proxiedMessageHandler) {
+							proxyFactory.addAdvice((MethodInterceptor) invocation -> {
+								if ("handleMessage".equals(invocation.getMethod().getName())) {
+									proxiedMessageHandler.invokedThroughProxy = true;
+								}
+								return invocation.proceed();
+							});
+						}
 						return proxyFactory.getProxy();
 					}
 					return bean;
@@ -608,6 +647,16 @@ public class ManualFlowTests {
 	}
 
 	static class ProxiedComponent {
+
+	}
+
+	static class ProxiedMessageHandler implements MessageHandler {
+
+		private volatile boolean invokedThroughProxy;
+
+		@Override
+		public void handleMessage(Message<?> message) {
+		}
 
 	}
 

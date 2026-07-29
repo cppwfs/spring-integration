@@ -194,9 +194,9 @@ public class IntegrationFlowBeanPostProcessor
 					this.beanFactory.registerAlias(handlerBeanName, id + IntegrationConfigUtils.HANDLER_ALIAS_SUFFIX);
 				}
 
-				registerComponent(registerBeanDefinitions, endpoint, id, beanSource,
+				Object registeredEndpoint = registerComponent(registerBeanDefinitions, endpoint, id, beanSource,
 						beanDescription, flowBeanName);
-				targetIntegrationComponents.put(endpoint, id);
+				targetIntegrationComponents.put(registeredEndpoint, id);
 			}
 			else if (component instanceof MessageChannelReference messageChannelReference) {
 				String channelBeanName = messageChannelReference.name();
@@ -488,20 +488,20 @@ public class IntegrationFlowBeanPostProcessor
 				.containsValue(instance);
 	}
 
-	private void registerComponent(boolean registerBeanDefinition,
+	private Object registerComponent(boolean registerBeanDefinition,
 			Object component, String beanName, @Nullable Object source,
 			@Nullable String description, @Nullable String parentName) {
 
 		if (registerBeanDefinition) {
-			registerBeanDefinition(component, beanName, source, description, parentName);
+			return registerBeanDefinition(component, beanName, source, description, parentName);
 		}
 		else {
-			registerSingleton(component, beanName, source, description, parentName);
+			return registerSingleton(component, beanName, source, description, parentName);
 		}
 	}
 
 	@SuppressWarnings("unchecked")
-	private void registerBeanDefinition(Object component, String beanName, @Nullable Object source,
+	private Object registerBeanDefinition(Object component, String beanName, @Nullable Object source,
 			@Nullable String description, @Nullable String parentName,
 			BeanDefinitionCustomizer... customizers) {
 
@@ -519,10 +519,10 @@ public class IntegrationFlowBeanPostProcessor
 
 		this.beanFactory.registerBeanDefinition(beanName, beanDefinition);
 		// Force early FactoryBean#getObject() resolution, e.g. for ConsumerEndpointFactoryBean et al.
-		this.beanFactory.getBean(beanName);
+		return this.beanFactory.getBean(beanName);
 	}
 
-	private void registerSingleton(Object component, String beanName, @Nullable Object source,
+	private Object registerSingleton(Object component, String beanName, @Nullable Object source,
 			@Nullable String description, @Nullable String parentName) {
 
 		if (component instanceof ComponentSourceAware componentSourceAware) {
@@ -540,7 +540,7 @@ public class IntegrationFlowBeanPostProcessor
 		// Register the post-processed (e.g. possibly proxied) instance, not the raw one.
 		this.beanFactory.registerSingleton(beanName, initializedComponent);
 		// Force early FactoryBean#getObject() resolution, e.g. for ConsumerEndpointFactoryBean et al.
-		this.beanFactory.getBean(beanName);
+		return this.beanFactory.getBean(beanName);
 	}
 
 	private String generateBeanName(Object instance, String prefix) {
